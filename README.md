@@ -13,12 +13,13 @@ https://ustbTobyMa.github.io/adi-graphite-nodule-ai/
 The browser app runs locally in the user's browser with ONNX Runtime Web. Uploaded SEM images are not sent to a server. Users can:
 
 - upload a SEM image
+- use common browser inputs including PNG, JPG/JPEG, BMP, WebP, TIF, and TIFF
 - enter the SEM pixel size in micrometres per source pixel, or calibrate it by selecting the two ends of a scale bar in the image
 - run the released U-Net model in the browser
 - inspect the overlay and synchronized equivalent-diameter and spheroidicity histograms
 - download image-level and object-level CSV outputs
 
-The browser app is intended for quick inspection and lightweight use.
+The browser app is intended for quick inspection and lightweight use. Multi-page TIFF files are loaded from the first page.
 
 ## Batch Analysis With Python
 
