@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use this model or workflow, please cite the associated ADI manuscript and this GitHub repository."
+title: "AI-assisted graphite nodule analysis for ductile cast iron SEM images"
+authors:
+  - family-names: "Ma"
+    given-names: "Toby"
+repository-code: "https://github.com/ustbTobyMa/adi-graphite-nodule-ai"
+license: "MIT"
+date-released: "2026-06-08"

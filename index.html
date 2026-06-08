@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Graphite Nodule AI</title>
+  <meta name="description" content="Browser and Python tools for graphite nodule segmentation in ductile cast iron SEM images.">
+  <style>
+    :root {
+      --bg: #f6f7f4;
+      --surface: #ffffff;
+      --ink: #17201b;
+      --muted: #5d6862;
+      --line: #d8dfda;
+      --accent: #1f6669;
+      --accent-2: #a94632;
+      --soft: #eaf0ed;
+      --code: #10221f;
+      --shadow: 0 18px 50px rgba(18, 32, 28, 0.10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.5;
+    }
+    img, canvas { max-width: 100%; display: block; }
+    a { color: var(--accent); text-underline-offset: 3px; }
+    header {
+      border-bottom: 1px solid var(--line);
+      background: rgba(246,247,244,0.94);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    nav {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 14px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 760;
+    }
+    .mark {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: conic-gradient(from 120deg, #1f6669, #788f86, #a94632, #1f6669);
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.78);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 14px;
+    }
+    .nav-links a { color: var(--muted); text-decoration: none; }
+    .nav-links a:hover { color: var(--ink); }
+    main { overflow: hidden; }
+    .hero {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 54px 22px 32px;
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(460px, 1.1fr);
+      gap: 42px;
+      align-items: center;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(38px, 5vw, 64px);
+      line-height: 0.98;
+      letter-spacing: 0;
+      max-width: 760px;
+    }
+    .lead {
+      margin: 20px 0 0;
+      max-width: 650px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+    }
+    .button, button {
+      min-height: 40px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      padding: 9px 14px;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .button.secondary, button.secondary {
+      background: transparent;
+      color: var(--accent);
+      border-color: #9eb2ad;
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .media-frame {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .media-frame img {
+      width: 100%;
+      aspect-ratio: 1.32 / 1;
+      object-fit: cover;
+    }
+    .caption {
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      padding: 12px 14px;
+    }
+    section {
+      border-top: 1px solid var(--line);
+      padding: 48px 22px;
+    }
+    .wrap { max-width: 1160px; margin: 0 auto; }
+    .section-head {
+      display: grid;
+      grid-template-columns: minmax(0, 0.68fr) minmax(0, 1fr);
+      gap: 34px;
+      align-items: end;
+      margin-bottom: 24px;
+    }
+    h2 {
+      margin: 0;
+      font-size: clamp(28px, 3vw, 42px);
+      line-height: 1.06;
+    }
+    .section-head p, .muted { color: var(--muted); margin: 0; }
+    .tool {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .panel-body { padding: 18px; }
+    .panel h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      font-size: 13px;
+      font-weight: 720;
+      color: #31443d;
+    }
+    input[type="number"], input[type="file"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 10px;
+      font: inherit;
+      color: var(--ink);
+    }
+    input[type="range"] { width: 100%; }
+    .inline {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .status {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 7px;
+      background: var(--soft);
+      color: var(--muted);
+      font-size: 13px;
+      min-height: 44px;
+    }
+    .canvas-wrap {
+      min-height: 420px;
+      background: #1a1d1b;
+      display: grid;
+      place-items: center;
+    }
+    #overlayCanvas {
+      width: 100%;
+      height: auto;
+      background: #1a1d1b;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .metric {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .metric strong {
+      display: block;
+      color: var(--accent);
+      font-size: 22px;
+      line-height: 1.15;
+    }
+    .metric span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    pre {
+      margin: 0;
+      overflow-x: auto;
+      padding: 18px;
+      border-radius: 8px;
+      background: var(--code);
+      color: #e4efe9;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+    .downloads {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .note {
+      margin-top: 14px;
+      border-left: 4px solid var(--accent-2);
+      background: #fff;
+      border-radius: 8px;
+      padding: 14px 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 30px 22px 42px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    footer .wrap {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 900px) {
+      .hero, .section-head, .tool, .grid-2 { grid-template-columns: 1fr; }
+      .hero { padding-top: 38px; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .nav-links { display: none; }
+    }
+    @media (max-width: 560px) {
+      nav, .hero, section { padding-left: 16px; padding-right: 16px; }
+      .actions .button, .actions button { width: 100%; }
+      .inline, .metrics { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav>
+      <div class="brand"><span class="mark" aria-hidden="true"></span><span>Graphite Nodule AI</span></div>
+      <div class="nav-links">
+        <a href="#tool">Web tool</a>
+        <a href="#python">Python</a>
+        <a href="#files">Files</a>
+        <a href="https://github.com/ustbTobyMa/adi-graphite-nodule-ai">GitHub</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <h1>Graphite nodule statistics directly from SEM images</h1>
+        <p class="lead">Run a released U-Net model in your browser or use the Python script for batch analysis. Uploaded images stay on your computer; the browser demo performs local ONNX inference.</p>
+        <div class="actions">
+          <a class="button" href="#tool">Use the browser tool</a>
+          <a class="button secondary" href="models/graphite_unet_seed7.pt">Download Python model</a>
+        </div>
+      </div>
+      <div class="media-frame">
+        <img src="assets/sample_overlay.png" alt="Example graphite nodule segmentation overlay">
+        <div class="caption">One public SEM example and reference overlay are provided. The full manuscript image set is not published in this repository.</div>
+      </div>
+    </div>
+
+    <section id="tool">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Browser tool</h2>
+          <p>Upload one representative low-magnification SEM field, enter the pixel size from your SEM scale bar, and run the model locally. Use the overlay as a quality check before using the metrics.</p>
+        </div>
+        <div class="tool">
+          <div class="panel">
+            <div class="panel-body">
+              <h3>Input and settings</h3>
+              <button id="exampleBtn" class="secondary" type="button">Load example image</button>
+              <label for="imageInput">SEM image</label>
+              <input id="imageInput" type="file" accept="image/png,image/jpeg,image/bmp,image/webp">
+              <label for="pixelSize">Pixel size (um/pixel)</label>
+              <input id="pixelSize" type="number" min="0.0001" step="0.0001" value="1.1627906976744187">
+              <label for="threshold">Probability threshold: <span id="thresholdLabel">0.50</span></label>
+              <input id="threshold" type="range" min="0.05" max="0.95" step="0.01" value="0.50">
+              <div class="inline">
+                <div>
+                  <label for="minArea">Min area (px)</label>
+                  <input id="minArea" type="number" min="1" step="1" value="25">
+                </div>
+                <div>
+                  <label for="maxArea">Max area (px)</label>
+                  <input id="maxArea" type="number" min="1" step="1" value="20000">
+                </div>
+              </div>
+              <label for="maxSide">Max browser-analysis side (px)</label>
+              <input id="maxSide" type="number" min="256" max="1024" step="16" value="768">
+              <div class="actions">
+                <button id="runBtn" type="button">Run local analysis</button>
+              </div>
+              <div id="status" class="status">Model will be downloaded to your browser when analysis starts.</div>
+              <div class="downloads">
+                <a id="imageCsvLink" class="button secondary" href="#" download="image_summary.csv" style="display:none;">Download image CSV</a>
+                <a id="objectCsvLink" class="button secondary" href="#" download="component_measurements.csv" style="display:none;">Download object CSV</a>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="panel">
+              <div class="canvas-wrap">
+                <canvas id="overlayCanvas" width="768" height="576" aria-label="Segmentation overlay"></canvas>
+              </div>
+            </div>
+            <div class="metrics" aria-live="polite">
+              <div class="metric"><strong id="mCount">-</strong><span>Nodule count</span></div>
+              <div class="metric"><strong id="mDensity">-</strong><span>Count density, mm<sup>-2</sup></span></div>
+              <div class="metric"><strong id="mDiameter">-</strong><span>Mean diameter, um</span></div>
+              <div class="metric"><strong id="mCircularity">-</strong><span>Mean circularity</span></div>
+            </div>
+            <div class="note">The browser tool is a quick single-image workflow. The Python script remains the recommended route for formal batch statistics and reproducible reporting.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="python">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Batch analysis</h2>
+          <p>Use the Python script for multiple images, probability maps, masks, overlays, JSON summaries, and object-level CSV output.</p>
+        </div>
+        <pre><code>git clone https://github.com/ustbTobyMa/adi-graphite-nodule-ai.git
+cd adi-graphite-nodule-ai
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+python scripts/graphite_nodule_analyzer.py \
+  --image-dir /path/to/sem_images \
+  --checkpoint models/graphite_unet_seed7.pt \
+  --output-dir /path/to/output \
+  --pixel-size-um YOUR_MICROMETRES_PER_PIXEL</code></pre>
+      </div>
+    </section>
+
+    <section id="files">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Released files</h2>
+          <p>Only minimal public assets are included: one example SEM image, one reference overlay/mask, the released model, and scripts.</p>
+        </div>
+        <div class="grid-2">
+          <div class="panel"><div class="panel-body"><h3>Models</h3><p class="muted"><a href="models/graphite_unet_seed7.onnx">ONNX model</a> for the browser and <a href="models/graphite_unet_seed7.pt">PyTorch checkpoint</a> for Python batch analysis.</p></div></div>
+          <div class="panel"><div class="panel-body"><h3>Example</h3><p class="muted"><a href="examples/images/sample_ductile_iron_sem.png">One SEM example</a>, <a href="examples/reference/sample_overlay.png">one overlay</a>, and <a href="examples/reference/sample_mask.png">one mask</a> are provided for testing only.</p></div></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>Graphite Nodule AI</span>
+      <span><a href="https://github.com/ustbTobyMa/adi-graphite-nodule-ai">github.com/ustbTobyMa/adi-graphite-nodule-ai</a></span>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.26.0/dist/ort.min.js"></script>
+  <script>
+    const state = {
+      imageBitmap: null,
+      fileName: "sample_ductile_iron_sem.png",
+      session: null,
+      lastUrls: []
+    };
+
+    const els = {
+      exampleBtn: document.getElementById("exampleBtn"),
+      imageInput: document.getElementById("imageInput"),
+      pixelSize: document.getElementById("pixelSize"),
+      threshold: document.getElementById("threshold"),
+      thresholdLabel: document.getElementById("thresholdLabel"),
+      minArea: document.getElementById("minArea"),
+      maxArea: document.getElementById("maxArea"),
+      maxSide: document.getElementById("maxSide"),
+      runBtn: document.getElementById("runBtn"),
+      status: document.getElementById("status"),
+      canvas: document.getElementById("overlayCanvas"),
+      mCount: document.getElementById("mCount"),
+      mDensity: document.getElementById("mDensity"),
+      mDiameter: document.getElementById("mDiameter"),
+      mCircularity: document.getElementById("mCircularity"),
+      imageCsvLink: document.getElementById("imageCsvLink"),
+      objectCsvLink: document.getElementById("objectCsvLink")
+    };
+
+    ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.26.0/dist/";
+
+    function setStatus(text) {
+      els.status.textContent = text;
+    }
+
+    function revokeUrls() {
+      state.lastUrls.forEach((url) => URL.revokeObjectURL(url));
+      state.lastUrls = [];
+    }
+
+    function sigmoid(x) {
+      return 1 / (1 + Math.exp(-x));
+    }
+
+    function scaledDims(width, height, maxSide) {
+      const scale = Math.min(1, maxSide / Math.max(width, height));
+      let w = Math.max(16, Math.floor(width * scale));
+      let h = Math.max(16, Math.floor(height * scale));
+      w = Math.floor(w / 16) * 16;
+      h = Math.floor(h / 16) * 16;
+      return [w, h];
+    }
+
+    function drawImageToInput(bitmap, maxSide) {
+      const [w, h] = scaledDims(bitmap.width, bitmap.height, maxSide);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(bitmap, 0, 0, w, h);
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const input = new Float32Array(w * h);
+      for (let i = 0, j = 0; i < imageData.data.length; i += 4, j++) {
+        input[j] = (0.299 * imageData.data[i] + 0.587 * imageData.data[i + 1] + 0.114 * imageData.data[i + 2]) / 255;
+      }
+      return { width: w, height: h, input, imageData };
+    }
+
+    function analyzeMask(prob, width, height, pixelSize, threshold, minArea, maxArea) {
+      const total = width * height;
+      const mask = new Uint8Array(total);
+      for (let i = 0; i < total; i++) mask[i] = prob[i] >= threshold ? 1 : 0;
+
+      const labels = new Int32Array(total);
+      const queue = new Int32Array(total);
+      const rows = [];
+      let label = 0;
+
+      for (let start = 0; start < total; start++) {
+        if (!mask[start] || labels[start]) continue;
+        label++;
+        let qh = 0;
+        let qt = 0;
+        queue[qt++] = start;
+        labels[start] = label;
+        let area = 0;
+        let sumX = 0;
+        let sumY = 0;
+        let minX = width;
+        let minY = height;
+        let maxX = 0;
+        let maxY = 0;
+        let perimeter = 0;
+
+        while (qh < qt) {
+          const idx = queue[qh++];
+          const y = Math.floor(idx / width);
+          const x = idx - y * width;
+          area++;
+          sumX += x;
+          sumY += y;
+          if (x < minX) minX = x;
+          if (x > maxX) maxX = x;
+          if (y < minY) minY = y;
+          if (y > maxY) maxY = y;
+
+          const neighbors = [
+            x > 0 ? idx - 1 : -1,
+            x < width - 1 ? idx + 1 : -1,
+            y > 0 ? idx - width : -1,
+            y < height - 1 ? idx + width : -1
+          ];
+          for (const nb of neighbors) {
+            if (nb < 0 || !mask[nb]) {
+              perimeter++;
+            } else if (!labels[nb]) {
+              labels[nb] = label;
+              queue[qt++] = nb;
+            }
+          }
+        }
+
+        const touchesBorder = minX <= 1 || minY <= 1 || maxX >= width - 2 || maxY >= height - 2;
+        if (area >= minArea && area <= maxArea && !touchesBorder) {
+          const eqPx = Math.sqrt((4 * area) / Math.PI);
+          const circularity = perimeter > 0 ? (4 * Math.PI * area) / (perimeter * perimeter) : 0;
+          rows.push({
+            label,
+            area_px: area,
+            area_um2: area * pixelSize * pixelSize,
+            equivalent_diameter_um: eqPx * pixelSize,
+            circularity,
+            centroid_x: sumX / area,
+            centroid_y: sumY / area,
+            bbox_min_col: minX,
+            bbox_min_row: minY,
+            bbox_max_col: maxX,
+            bbox_max_row: maxY
+          });
+        }
+      }
+
+      const keep = new Set(rows.map((row) => row.label));
+      const keptMask = new Uint8Array(total);
+      let keptPixels = 0;
+      for (let i = 0; i < total; i++) {
+        if (keep.has(labels[i])) {
+          keptMask[i] = 1;
+          keptPixels++;
+        }
+      }
+      return { rows, labels, keptMask, keptPixels };
+    }
+
+    function renderOverlay(imageData, analysis, width, height) {
+      const out = new ImageData(new Uint8ClampedArray(imageData.data), width, height);
+      for (let i = 0; i < analysis.keptMask.length; i++) {
+        if (!analysis.keptMask[i]) continue;
+        const p = i * 4;
+        out.data[p] = Math.min(255, out.data[p] * 0.65 + 255 * 0.35);
+        out.data[p + 1] = out.data[p + 1] * 0.65;
+        out.data[p + 2] = out.data[p + 2] * 0.65;
+      }
+      const ctx = els.canvas.getContext("2d");
+      els.canvas.width = width;
+      els.canvas.height = height;
+      ctx.putImageData(out, 0, 0);
+      ctx.strokeStyle = "rgba(0, 235, 255, 0.95)";
+      ctx.lineWidth = 1;
+      ctx.fillStyle = "rgba(255, 230, 0, 0.95)";
+      for (const row of analysis.rows) {
+        ctx.beginPath();
+        ctx.arc(row.centroid_x, row.centroid_y, 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    function mean(values) {
+      if (!values.length) return NaN;
+      return values.reduce((a, b) => a + b, 0) / values.length;
+    }
+
+    function toCsv(rows) {
+      if (!rows.length) return "";
+      const keys = Object.keys(rows[0]);
+      const esc = (v) => `"${String(v).replaceAll('"', '""')}"`;
+      return [keys.join(","), ...rows.map((row) => keys.map((k) => esc(row[k])).join(","))].join("\n");
+    }
+
+    function makeDownload(link, text, filename) {
+      const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      state.lastUrls.push(url);
+      link.href = url;
+      link.download = filename;
+      link.style.display = "inline-flex";
+    }
+
+    async function loadExample() {
+      const response = await fetch("examples/images/sample_ductile_iron_sem.png");
+      const blob = await response.blob();
+      state.imageBitmap = await createImageBitmap(blob);
+      state.fileName = "sample_ductile_iron_sem.png";
+      const preview = drawImageToInput(state.imageBitmap, Number(els.maxSide.value));
+      els.canvas.width = preview.width;
+      els.canvas.height = preview.height;
+      els.canvas.getContext("2d").putImageData(preview.imageData, 0, 0);
+      setStatus("Example image loaded. Run local analysis to segment nodules.");
+    }
+
+    async function ensureSession() {
+      if (!state.session) {
+        setStatus("Loading ONNX model in browser...");
+        state.session = await ort.InferenceSession.create("models/graphite_unet_seed7.onnx", {
+          executionProviders: ["wasm"]
+        });
+      }
+      return state.session;
+    }
+
+    async function runAnalysis() {
+      if (!state.imageBitmap) {
+        setStatus("Load the example image or choose a local SEM image first.");
+        return;
+      }
+      const pixelSize = Number(els.pixelSize.value);
+      if (!Number.isFinite(pixelSize) || pixelSize <= 0) {
+        setStatus("Pixel size must be a positive number.");
+        return;
+      }
+      const threshold = Number(els.threshold.value);
+      const minArea = Math.max(1, Math.round(Number(els.minArea.value)));
+      const maxArea = Math.max(minArea, Math.round(Number(els.maxArea.value)));
+      const maxSide = Math.max(256, Math.round(Number(els.maxSide.value)));
+
+      els.runBtn.disabled = true;
+      revokeUrls();
+      els.imageCsvLink.style.display = "none";
+      els.objectCsvLink.style.display = "none";
+      try {
+        const prepared = drawImageToInput(state.imageBitmap, maxSide);
+        const session = await ensureSession();
+        setStatus(`Running local inference on ${prepared.width} x ${prepared.height} pixels...`);
+        const tensor = new ort.Tensor("float32", prepared.input, [1, 1, prepared.height, prepared.width]);
+        const result = await session.run({ image: tensor });
+        const logits = result.logits.data;
+        const prob = new Float32Array(logits.length);
+        for (let i = 0; i < logits.length; i++) prob[i] = sigmoid(logits[i]);
+        const analysis = analyzeMask(prob, prepared.width, prepared.height, pixelSize, threshold, minArea, maxArea);
+        renderOverlay(prepared.imageData, analysis, prepared.width, prepared.height);
+
+        const fieldAreaMm2 = prepared.width * prepared.height * pixelSize * pixelSize / 1_000_000;
+        const diameters = analysis.rows.map((row) => row.equivalent_diameter_um);
+        const circularities = analysis.rows.map((row) => row.circularity);
+        const imageRow = {
+          image: state.fileName,
+          width_px: prepared.width,
+          height_px: prepared.height,
+          pixel_size_um: pixelSize,
+          threshold,
+          nodule_count: analysis.rows.length,
+          nodule_count_per_mm2: analysis.rows.length / fieldAreaMm2,
+          graphite_area_fraction: analysis.keptPixels / analysis.keptMask.length,
+          mean_equivalent_diameter_um: mean(diameters),
+          mean_circularity: mean(circularities)
+        };
+        const objectRows = analysis.rows.map((row, index) => ({ image: state.fileName, object_id: index + 1, ...row }));
+        els.mCount.textContent = String(imageRow.nodule_count);
+        els.mDensity.textContent = Number.isFinite(imageRow.nodule_count_per_mm2) ? imageRow.nodule_count_per_mm2.toFixed(2) : "-";
+        els.mDiameter.textContent = Number.isFinite(imageRow.mean_equivalent_diameter_um) ? imageRow.mean_equivalent_diameter_um.toFixed(2) : "-";
+        els.mCircularity.textContent = Number.isFinite(imageRow.mean_circularity) ? imageRow.mean_circularity.toFixed(3) : "-";
+        makeDownload(els.imageCsvLink, toCsv([imageRow]), "image_summary.csv");
+        makeDownload(els.objectCsvLink, toCsv(objectRows), "component_measurements.csv");
+        setStatus("Analysis complete. Inspect the overlay before using the metrics.");
+      } catch (error) {
+        console.error(error);
+        setStatus(`Analysis failed: ${error.message}`);
+      } finally {
+        els.runBtn.disabled = false;
+      }
+    }
+
+    els.threshold.addEventListener("input", () => {
+      els.thresholdLabel.textContent = Number(els.threshold.value).toFixed(2);
+    });
+
+    els.imageInput.addEventListener("change", async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      state.imageBitmap = await createImageBitmap(file);
+      state.fileName = file.name;
+      const preview = drawImageToInput(state.imageBitmap, Number(els.maxSide.value));
+      els.canvas.width = preview.width;
+      els.canvas.height = preview.height;
+      els.canvas.getContext("2d").putImageData(preview.imageData, 0, 0);
+      setStatus("Image loaded. Run local analysis to segment nodules.");
+    });
+
+    els.exampleBtn.addEventListener("click", loadExample);
+    els.runBtn.addEventListener("click", runAnalysis);
+    loadExample();
+  </script>
+</body>
+</html>
