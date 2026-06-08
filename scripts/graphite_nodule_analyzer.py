@@ -105,8 +105,8 @@ def predict_probability(model: UNet, gray: np.ndarray, device: torch.device) -> 
 
 def postprocess_mask(probability: np.ndarray, threshold: float, min_object_px: int) -> np.ndarray:
     mask = probability > threshold
-    mask = morphology.remove_small_objects(mask, max_size=min_object_px - 1)
-    mask = morphology.remove_small_holes(mask, max_size=39)
+    mask = morphology.remove_small_objects(mask, min_size=min_object_px)
+    mask = morphology.remove_small_holes(mask, area_threshold=39)
     mask = morphology.closing(mask, morphology.disk(2))
     return mask.astype(bool)
 

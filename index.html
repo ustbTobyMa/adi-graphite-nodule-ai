@@ -322,6 +322,35 @@
       color: var(--muted);
       font-size: 14px;
     }
+    .note.manuscript-note {
+      margin: 0 0 18px;
+      color: var(--ink);
+      background: #fffaf7;
+    }
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 11px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #eef3ef;
+      color: #31443d;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    td:last-child, th:last-child { white-space: nowrap; }
+    .panel-body > .hint:last-child { margin-bottom: 0; }
     footer {
       border-top: 1px solid var(--line);
       padding: 30px 22px 42px;
@@ -353,6 +382,7 @@
     <nav>
       <div class="brand"><span class="mark" aria-hidden="true"></span><span>Graphite Nodule AI</span></div>
       <div class="nav-links">
+        <a href="#validation">Validation</a>
         <a href="#tool">Web tool</a>
         <a href="#python">Python</a>
         <a href="#files">Files</a>
@@ -377,12 +407,73 @@
       </div>
     </div>
 
+    <section id="validation">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Reviewer validation</h2>
+          <p>The public repository includes one SEM example for direct inspection, plus cautious validation metrics for the released Python U-Net batch workflow.</p>
+        </div>
+        <div class="grid-2">
+          <div class="panel">
+            <div class="panel-body">
+              <h3>Public example: AI vs traditional/ImageJ-style workflow</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Traditional/ImageJ-style</th>
+                      <th>Python U-Net batch</th>
+                      <th>Relative error</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Nodule count</td><td>180</td><td>178</td><td>1.1%</td></tr>
+                    <tr><td>Count density</td><td>169.28 mm⁻²</td><td>167.40 mm⁻²</td><td>1.1%</td></tr>
+                    <tr><td>Mean diameter</td><td>25.81 μm</td><td>25.76 μm</td><td>0.2%</td></tr>
+                    <tr><td>Mean spheroidicity</td><td>0.791</td><td>0.851</td><td>7.6%</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="hint">Comparator: inverted-grayscale Otsu thresholding and watershed, using the same 1.16279 μm/pixel scale and 25-20000 px object filters. Relative error is calculated against the traditional/ImageJ-style result. The U-Net values are from the Python batch workflow used for formal statistics.</p>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-body">
+              <h3>Model performance summary</h3>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Value</th>
+                      <th>Scope</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>Dice coefficient</td><td>0.963</td><td>Held-out curated masks</td></tr>
+                    <tr><td>IoU</td><td>0.929</td><td>Held-out curated masks</td></tr>
+                    <tr><td>Precision / recall</td><td>0.933 / 0.995</td><td>Held-out curated masks</td></tr>
+                    <tr><td>Nodule-count MAE</td><td>2.33 nodules</td><td>Two-seed repeatability</td></tr>
+                    <tr><td>Area-fraction difference</td><td>0.20 percentage points</td><td>Public traditional/ImageJ-style check</td></tr>
+                    <tr><td>Count-density MAE</td><td>2.19 mm⁻²</td><td>Two-seed repeatability</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="hint">The reported validation metrics quantify agreement with curated reference masks rather than a fully independent expert-labeled benchmark.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="tool">
       <div class="wrap">
         <div class="section-head">
           <h2>Browser tool</h2>
           <p>Upload one representative low-magnification SEM field, enter the pixel size or select the scale bar, and run the model locally. Use the overlay as a quality check before using the metrics.</p>
         </div>
+        <div class="note manuscript-note">For manuscript-level statistics, we used the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters. The browser tool is intended for reviewer inspection and single-image verification.</div>
         <div class="tool">
           <div class="panel">
             <div class="panel-body">
@@ -391,12 +482,12 @@
               <label for="imageInput">SEM image</label>
               <input id="imageInput" type="file" accept="image/png,image/jpeg,image/bmp,image/webp,image/tiff,image/x-tiff,.png,.jpg,.jpeg,.bmp,.webp,.tif,.tiff">
               <p class="hint">Supported single-image inputs: PNG, JPG/JPEG, BMP, WebP, TIF, and TIFF. Multi-page TIFF files use the first page.</p>
-              <label for="pixelSize">Source pixel size (um/pixel)</label>
+              <label for="pixelSize">Source pixel size (μm/pixel)</label>
               <input id="pixelSize" type="number" min="0.0001" step="0.0001" value="1.1627906976744187">
               <p class="hint">Manual values should come from the original SEM image. If the browser downsizes the image, the app converts this value before measuring objects.</p>
               <div class="calibration-box">
                 <h3>Scale-bar calibration</h3>
-                <label for="scaleLength">Scale-bar length (um)</label>
+                <label for="scaleLength">Scale-bar length (μm)</label>
                 <input id="scaleLength" type="number" min="0.0001" step="0.1" value="100">
                 <div class="button-row">
                   <button id="calibrateBtn" class="secondary" type="button">Select scale bar</button>
@@ -417,7 +508,7 @@
                 </div>
               </div>
               <label for="maxSide">Max browser-analysis side (px)</label>
-              <input id="maxSide" type="number" min="256" max="1024" step="16" value="768">
+              <input id="maxSide" type="number" min="256" max="1024" step="16" value="1024">
               <div class="actions">
                 <button id="runBtn" type="button">Run local analysis</button>
               </div>
@@ -436,14 +527,14 @@
             </div>
             <div class="metrics" aria-live="polite">
               <div class="metric"><strong id="mCount">-</strong><span>Nodule count</span></div>
-              <div class="metric"><strong id="mDensity">-</strong><span>Count density, mm<sup>-2</sup></span></div>
-              <div class="metric"><strong id="mDiameter">-</strong><span>Mean diameter, um</span></div>
+              <div class="metric"><strong id="mDensity">-</strong><span>Count density, mm⁻²</span></div>
+              <div class="metric"><strong id="mDiameter">-</strong><span>Mean diameter, μm</span></div>
               <div class="metric"><strong id="mCircularity">-</strong><span>Mean spheroidicity</span></div>
             </div>
             <div class="charts" aria-live="polite">
               <div class="panel chart-card">
                 <div class="panel-body">
-                  <div class="chart-head"><h3>Equivalent diameter</h3><span>um</span></div>
+                  <div class="chart-head"><h3>Equivalent diameter</h3><span>μm</span></div>
                   <canvas id="diameterHist" class="chart-canvas" width="420" height="220" aria-label="Equivalent diameter histogram"></canvas>
                 </div>
               </div>
@@ -661,7 +752,7 @@ python scripts/graphite_nodule_analyzer.py \
       }
       const analysisPixelSize = lengthUm / distancePx;
       state.calibration = { lengthUm, distancePx, analysisPixelSize, width: els.canvas.width, height: els.canvas.height };
-      els.scaleStatus.textContent = `Calibrated: ${analysisPixelSize.toPrecision(6)} um per analyzed pixel from ${distancePx.toFixed(1)} px.`;
+      els.scaleStatus.textContent = `Calibrated: ${analysisPixelSize.toPrecision(6)} μm per analyzed pixel from ${distancePx.toFixed(1)} px.`;
       return true;
     }
 
