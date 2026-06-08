@@ -185,11 +185,35 @@
       color: var(--ink);
     }
     input[type="range"] { width: 100%; }
+    .hint {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
     .inline {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
+    .calibration-box {
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfa;
+    }
+    .calibration-box h3 {
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .button-row button { flex: 1 1 128px; }
     .status {
       margin-top: 14px;
       padding: 12px;
@@ -210,6 +234,7 @@
       height: auto;
       background: #1a1d1b;
     }
+    #overlayCanvas.is-calibrating { cursor: crosshair; }
     .metrics {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -233,6 +258,37 @@
       margin-top: 5px;
       color: var(--muted);
       font-size: 12px;
+    }
+    .charts {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .chart-card .panel-body { padding: 14px; }
+    .chart-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .chart-head h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+    .chart-head span {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .chart-canvas {
+      width: 100%;
+      height: 180px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
     }
     .grid-2 {
       display: grid;
@@ -281,6 +337,7 @@
     @media (max-width: 900px) {
       .hero, .section-head, .tool, .grid-2 { grid-template-columns: 1fr; }
       .hero { padding-top: 38px; }
+      .charts { grid-template-columns: 1fr; }
       .metrics { grid-template-columns: repeat(2, 1fr); }
       .nav-links { display: none; }
     }
@@ -324,7 +381,7 @@
       <div class="wrap">
         <div class="section-head">
           <h2>Browser tool</h2>
-          <p>Upload one representative low-magnification SEM field, enter the pixel size from your SEM scale bar, and run the model locally. Use the overlay as a quality check before using the metrics.</p>
+          <p>Upload one representative low-magnification SEM field, enter the pixel size or select the scale bar, and run the model locally. Use the overlay as a quality check before using the metrics.</p>
         </div>
         <div class="tool">
           <div class="panel">
@@ -333,8 +390,19 @@
               <button id="exampleBtn" class="secondary" type="button">Load example image</button>
               <label for="imageInput">SEM image</label>
               <input id="imageInput" type="file" accept="image/png,image/jpeg,image/bmp,image/webp">
-              <label for="pixelSize">Pixel size (um/pixel)</label>
+              <label for="pixelSize">Source pixel size (um/pixel)</label>
               <input id="pixelSize" type="number" min="0.0001" step="0.0001" value="1.1627906976744187">
+              <p class="hint">Manual values should come from the original SEM image. If the browser downsizes the image, the app converts this value before measuring objects.</p>
+              <div class="calibration-box">
+                <h3>Scale-bar calibration</h3>
+                <label for="scaleLength">Scale-bar length (um)</label>
+                <input id="scaleLength" type="number" min="0.0001" step="0.1" value="100">
+                <div class="button-row">
+                  <button id="calibrateBtn" class="secondary" type="button">Select scale bar</button>
+                  <button id="clearScaleBtn" class="secondary" type="button">Clear scale</button>
+                </div>
+                <p id="scaleStatus" class="hint">Click Select scale bar, then click the two ends of the scale bar on the image.</p>
+              </div>
               <label for="threshold">Probability threshold: <span id="thresholdLabel">0.50</span></label>
               <input id="threshold" type="range" min="0.05" max="0.95" step="0.01" value="0.50">
               <div class="inline">
@@ -369,7 +437,21 @@
               <div class="metric"><strong id="mCount">-</strong><span>Nodule count</span></div>
               <div class="metric"><strong id="mDensity">-</strong><span>Count density, mm<sup>-2</sup></span></div>
               <div class="metric"><strong id="mDiameter">-</strong><span>Mean diameter, um</span></div>
-              <div class="metric"><strong id="mCircularity">-</strong><span>Mean circularity</span></div>
+              <div class="metric"><strong id="mCircularity">-</strong><span>Mean spheroidicity</span></div>
+            </div>
+            <div class="charts" aria-live="polite">
+              <div class="panel chart-card">
+                <div class="panel-body">
+                  <div class="chart-head"><h3>Equivalent diameter</h3><span>um</span></div>
+                  <canvas id="diameterHist" class="chart-canvas" width="420" height="220" aria-label="Equivalent diameter histogram"></canvas>
+                </div>
+              </div>
+              <div class="panel chart-card">
+                <div class="panel-body">
+                  <div class="chart-head"><h3>Spheroidicity</h3><span>2D circularity, 0 to 1</span></div>
+                  <canvas id="circularityHist" class="chart-canvas" width="420" height="220" aria-label="Spheroidicity histogram"></canvas>
+                </div>
+              </div>
             </div>
             <div class="note">The browser tool is a quick single-image workflow. The Python script remains the recommended route for formal batch statistics and reproducible reporting.</div>
           </div>
@@ -424,13 +506,23 @@ python scripts/graphite_nodule_analyzer.py \
       imageBitmap: null,
       fileName: "sample_ductile_iron_sem.png",
       session: null,
-      lastUrls: []
+      lastUrls: [],
+      preview: null,
+      canvasBase: null,
+      centroids: [],
+      calibrationPoints: [],
+      calibration: null,
+      calibrating: false
     };
 
     const els = {
       exampleBtn: document.getElementById("exampleBtn"),
       imageInput: document.getElementById("imageInput"),
       pixelSize: document.getElementById("pixelSize"),
+      scaleLength: document.getElementById("scaleLength"),
+      calibrateBtn: document.getElementById("calibrateBtn"),
+      clearScaleBtn: document.getElementById("clearScaleBtn"),
+      scaleStatus: document.getElementById("scaleStatus"),
       threshold: document.getElementById("threshold"),
       thresholdLabel: document.getElementById("thresholdLabel"),
       minArea: document.getElementById("minArea"),
@@ -444,7 +536,9 @@ python scripts/graphite_nodule_analyzer.py \
       mDiameter: document.getElementById("mDiameter"),
       mCircularity: document.getElementById("mCircularity"),
       imageCsvLink: document.getElementById("imageCsvLink"),
-      objectCsvLink: document.getElementById("objectCsvLink")
+      objectCsvLink: document.getElementById("objectCsvLink"),
+      diameterHist: document.getElementById("diameterHist"),
+      circularityHist: document.getElementById("circularityHist")
     };
 
     ort.env.wasm.wasmPaths = "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.26.0/dist/";
@@ -473,6 +567,7 @@ python scripts/graphite_nodule_analyzer.py \
 
     function drawImageToInput(bitmap, maxSide) {
       const [w, h] = scaledDims(bitmap.width, bitmap.height, maxSide);
+      const scale = Math.sqrt((w / bitmap.width) * (h / bitmap.height));
       const canvas = document.createElement("canvas");
       canvas.width = w;
       canvas.height = h;
@@ -483,7 +578,193 @@ python scripts/graphite_nodule_analyzer.py \
       for (let i = 0, j = 0; i < imageData.data.length; i += 4, j++) {
         input[j] = (0.299 * imageData.data[i] + 0.587 * imageData.data[i + 1] + 0.114 * imageData.data[i + 2]) / 255;
       }
-      return { width: w, height: h, input, imageData };
+      return { width: w, height: h, scale, input, imageData };
+    }
+
+    function drawCalibration(ctx) {
+      if (!state.calibrationPoints.length) return;
+      ctx.save();
+      ctx.lineWidth = Math.max(2, Math.round(els.canvas.width / 420));
+      ctx.strokeStyle = "#ffe24a";
+      ctx.fillStyle = "#ffe24a";
+      ctx.setLineDash([8, 5]);
+      const [p1, p2] = state.calibrationPoints;
+      if (p2) {
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+      }
+      ctx.setLineDash([]);
+      for (const point of state.calibrationPoints) {
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#17201b";
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawCanvas() {
+      if (!state.canvasBase) return;
+      const ctx = els.canvas.getContext("2d");
+      els.canvas.width = state.canvasBase.width;
+      els.canvas.height = state.canvasBase.height;
+      ctx.putImageData(state.canvasBase.imageData, 0, 0);
+      if (state.centroids.length) {
+        ctx.fillStyle = "rgba(255, 230, 0, 0.95)";
+        for (const row of state.centroids) {
+          ctx.beginPath();
+          ctx.arc(row.centroid_x, row.centroid_y, 1.6, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      drawCalibration(ctx);
+    }
+
+    function resetMeasurements() {
+      els.mCount.textContent = "-";
+      els.mDensity.textContent = "-";
+      els.mDiameter.textContent = "-";
+      els.mCircularity.textContent = "-";
+      els.imageCsvLink.style.display = "none";
+      els.objectCsvLink.style.display = "none";
+      clearHistogram(els.diameterHist, "Equivalent diameter");
+      clearHistogram(els.circularityHist, "Spheroidicity");
+    }
+
+    function clearCalibration(message) {
+      state.calibrationPoints = [];
+      state.calibration = null;
+      state.calibrating = false;
+      els.canvas.classList.remove("is-calibrating");
+      els.calibrateBtn.textContent = "Select scale bar";
+      els.scaleStatus.textContent = message || "Click Select scale bar, then click the two ends of the scale bar on the image.";
+      drawCanvas();
+    }
+
+    function updateCalibrationFromPoints() {
+      if (state.calibrationPoints.length < 2) return false;
+      const lengthUm = Number(els.scaleLength.value);
+      if (!Number.isFinite(lengthUm) || lengthUm <= 0) {
+        els.scaleStatus.textContent = "Scale-bar length must be a positive number.";
+        return false;
+      }
+      const [p1, p2] = state.calibrationPoints;
+      const distancePx = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      if (!Number.isFinite(distancePx) || distancePx <= 0) {
+        els.scaleStatus.textContent = "Select two different points on the scale bar.";
+        return false;
+      }
+      const analysisPixelSize = lengthUm / distancePx;
+      state.calibration = { lengthUm, distancePx, analysisPixelSize, width: els.canvas.width, height: els.canvas.height };
+      els.scaleStatus.textContent = `Calibrated: ${analysisPixelSize.toPrecision(6)} um per analyzed pixel from ${distancePx.toFixed(1)} px.`;
+      return true;
+    }
+
+    function getCanvasPoint(event) {
+      const rect = els.canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) * els.canvas.width / rect.width,
+        y: (event.clientY - rect.top) * els.canvas.height / rect.height
+      };
+    }
+
+    function getPixelSizeForAnalysis(prepared) {
+      if (state.calibration && state.calibration.width === prepared.width && state.calibration.height === prepared.height) {
+        return state.calibration.analysisPixelSize;
+      }
+      const sourcePixelSize = Number(els.pixelSize.value);
+      if (!Number.isFinite(sourcePixelSize) || sourcePixelSize <= 0) return NaN;
+      return sourcePixelSize / prepared.scale;
+    }
+
+    function preparePreview(statusText, scaleMessage) {
+      if (!state.imageBitmap) return null;
+      clearCalibration(scaleMessage || "Click Select scale bar, then click the two ends of the scale bar on the image.");
+      const preview = drawImageToInput(state.imageBitmap, Number(els.maxSide.value));
+      state.preview = preview;
+      state.centroids = [];
+      state.canvasBase = {
+        width: preview.width,
+        height: preview.height,
+        imageData: new ImageData(new Uint8ClampedArray(preview.imageData.data), preview.width, preview.height)
+      };
+      drawCanvas();
+      resetMeasurements();
+      if (statusText) setStatus(statusText);
+      return preview;
+    }
+
+    function clearHistogram(canvas, label) {
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = "#d8dfda";
+      ctx.strokeRect(0.5, 0.5, canvas.width - 1, canvas.height - 1);
+      ctx.fillStyle = "#5d6862";
+      ctx.font = "13px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(`${label} histogram appears after analysis`, canvas.width / 2, canvas.height / 2);
+    }
+
+    function drawHistogram(canvas, values, options) {
+      const ctx = canvas.getContext("2d");
+      const width = canvas.width;
+      const height = canvas.height;
+      const margin = { top: 18, right: 14, bottom: 34, left: 42 };
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+      const clean = values.filter((value) => Number.isFinite(value));
+      if (!clean.length) {
+        clearHistogram(canvas, options.label);
+        return;
+      }
+      const bins = options.bins || 12;
+      let min = options.min;
+      let max = options.max;
+      if (!Number.isFinite(min)) min = Math.min(...clean);
+      if (!Number.isFinite(max)) max = Math.max(...clean);
+      if (min === max) {
+        min = Math.max(0, min - 0.5);
+        max += 0.5;
+      }
+      const counts = new Array(bins).fill(0);
+      for (const value of clean) {
+        const clamped = Math.min(max, Math.max(min, value));
+        const index = Math.min(bins - 1, Math.floor((clamped - min) / (max - min) * bins));
+        counts[index]++;
+      }
+      const chartW = width - margin.left - margin.right;
+      const chartH = height - margin.top - margin.bottom;
+      const maxCount = Math.max(...counts, 1);
+      ctx.strokeStyle = "#d8dfda";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(margin.left, margin.top);
+      ctx.lineTo(margin.left, margin.top + chartH);
+      ctx.lineTo(margin.left + chartW, margin.top + chartH);
+      ctx.stroke();
+      ctx.fillStyle = options.color || "#1f6669";
+      counts.forEach((count, index) => {
+        const barW = chartW / bins;
+        const barH = count / maxCount * chartH;
+        const x = margin.left + index * barW + 2;
+        const y = margin.top + chartH - barH;
+        ctx.fillRect(x, y, Math.max(1, barW - 4), barH);
+      });
+      ctx.fillStyle = "#5d6862";
+      ctx.font = "12px system-ui, sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(String(maxCount), margin.left - 7, margin.top + 4);
+      ctx.fillText("0", margin.left - 7, margin.top + chartH + 4);
+      ctx.textAlign = "left";
+      ctx.fillText(min.toFixed(options.tickDigits ?? 1), margin.left, height - 10);
+      ctx.textAlign = "right";
+      ctx.fillText(max.toFixed(options.tickDigits ?? 1), margin.left + chartW, height - 10);
     }
 
     function analyzeMask(prob, width, height, pixelSize, threshold, minArea, maxArea) {
@@ -581,18 +862,9 @@ python scripts/graphite_nodule_analyzer.py \
         out.data[p + 1] = out.data[p + 1] * 0.65;
         out.data[p + 2] = out.data[p + 2] * 0.65;
       }
-      const ctx = els.canvas.getContext("2d");
-      els.canvas.width = width;
-      els.canvas.height = height;
-      ctx.putImageData(out, 0, 0);
-      ctx.strokeStyle = "rgba(0, 235, 255, 0.95)";
-      ctx.lineWidth = 1;
-      ctx.fillStyle = "rgba(255, 230, 0, 0.95)";
-      for (const row of analysis.rows) {
-        ctx.beginPath();
-        ctx.arc(row.centroid_x, row.centroid_y, 1.6, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      state.canvasBase = { width, height, imageData: out };
+      state.centroids = analysis.rows;
+      drawCanvas();
     }
 
     function mean(values) {
@@ -621,11 +893,7 @@ python scripts/graphite_nodule_analyzer.py \
       const blob = await response.blob();
       state.imageBitmap = await createImageBitmap(blob);
       state.fileName = "sample_ductile_iron_sem.png";
-      const preview = drawImageToInput(state.imageBitmap, Number(els.maxSide.value));
-      els.canvas.width = preview.width;
-      els.canvas.height = preview.height;
-      els.canvas.getContext("2d").putImageData(preview.imageData, 0, 0);
-      setStatus("Example image loaded. Run local analysis to segment nodules.");
+      preparePreview("Example image loaded. Run local analysis to segment nodules.");
     }
 
     async function ensureSession() {
@@ -643,15 +911,11 @@ python scripts/graphite_nodule_analyzer.py \
         setStatus("Load the example image or choose a local SEM image first.");
         return;
       }
-      const pixelSize = Number(els.pixelSize.value);
-      if (!Number.isFinite(pixelSize) || pixelSize <= 0) {
-        setStatus("Pixel size must be a positive number.");
-        return;
-      }
       const threshold = Number(els.threshold.value);
       const minArea = Math.max(1, Math.round(Number(els.minArea.value)));
       const maxArea = Math.max(minArea, Math.round(Number(els.maxArea.value)));
       const maxSide = Math.max(256, Math.round(Number(els.maxSide.value)));
+      const sourcePixelSize = Number(els.pixelSize.value);
 
       els.runBtn.disabled = true;
       revokeUrls();
@@ -659,6 +923,15 @@ python scripts/graphite_nodule_analyzer.py \
       els.objectCsvLink.style.display = "none";
       try {
         const prepared = drawImageToInput(state.imageBitmap, maxSide);
+        const usesCalibration = Boolean(state.calibration && state.calibration.width === prepared.width && state.calibration.height === prepared.height);
+        if (state.calibration && !usesCalibration) {
+          clearCalibration("Scale calibration was reset because the browser-analysis size changed. Select the scale bar again if needed.");
+        }
+        const pixelSize = getPixelSizeForAnalysis(prepared);
+        if (!Number.isFinite(pixelSize) || pixelSize <= 0) {
+          setStatus("Pixel size must be a positive number. Enter it manually or calibrate from the scale bar.");
+          return;
+        }
         const session = await ensureSession();
         setStatus(`Running local inference on ${prepared.width} x ${prepared.height} pixels...`);
         const tensor = new ort.Tensor("float32", prepared.input, [1, 1, prepared.height, prepared.width]);
@@ -676,7 +949,11 @@ python scripts/graphite_nodule_analyzer.py \
           image: state.fileName,
           width_px: prepared.width,
           height_px: prepared.height,
-          pixel_size_um: pixelSize,
+          source_pixel_size_um: Number.isFinite(sourcePixelSize) ? sourcePixelSize : "",
+          analysis_pixel_size_um: pixelSize,
+          pixel_size_mode: usesCalibration ? "scale_bar" : "manual_source_pixel",
+          scale_bar_length_um: usesCalibration ? state.calibration.lengthUm : "",
+          scale_bar_distance_px: usesCalibration ? state.calibration.distancePx : "",
           threshold,
           nodule_count: analysis.rows.length,
           nodule_count_per_mm2: analysis.rows.length / fieldAreaMm2,
@@ -689,6 +966,8 @@ python scripts/graphite_nodule_analyzer.py \
         els.mDensity.textContent = Number.isFinite(imageRow.nodule_count_per_mm2) ? imageRow.nodule_count_per_mm2.toFixed(2) : "-";
         els.mDiameter.textContent = Number.isFinite(imageRow.mean_equivalent_diameter_um) ? imageRow.mean_equivalent_diameter_um.toFixed(2) : "-";
         els.mCircularity.textContent = Number.isFinite(imageRow.mean_circularity) ? imageRow.mean_circularity.toFixed(3) : "-";
+        drawHistogram(els.diameterHist, diameters, { label: "Equivalent diameter", color: "#1f6669", bins: 12, tickDigits: 1 });
+        drawHistogram(els.circularityHist, circularities, { label: "Spheroidicity", color: "#a94632", min: 0, max: 1, bins: 10, tickDigits: 1 });
         makeDownload(els.imageCsvLink, toCsv([imageRow]), "image_summary.csv");
         makeDownload(els.objectCsvLink, toCsv(objectRows), "component_measurements.csv");
         setStatus("Analysis complete. Inspect the overlay before using the metrics.");
@@ -709,15 +988,63 @@ python scripts/graphite_nodule_analyzer.py \
       if (!file) return;
       state.imageBitmap = await createImageBitmap(file);
       state.fileName = file.name;
-      const preview = drawImageToInput(state.imageBitmap, Number(els.maxSide.value));
-      els.canvas.width = preview.width;
-      els.canvas.height = preview.height;
-      els.canvas.getContext("2d").putImageData(preview.imageData, 0, 0);
-      setStatus("Image loaded. Run local analysis to segment nodules.");
+      preparePreview("Image loaded. Run local analysis to segment nodules.");
+    });
+
+    els.calibrateBtn.addEventListener("click", () => {
+      if (!state.canvasBase) {
+        els.scaleStatus.textContent = "Load an image before selecting the scale bar.";
+        return;
+      }
+      state.calibrating = !state.calibrating;
+      if (state.calibrating) {
+        state.calibrationPoints = [];
+        state.calibration = null;
+        els.canvas.classList.add("is-calibrating");
+        els.calibrateBtn.textContent = "Cancel selection";
+        els.scaleStatus.textContent = "Click the first end of the scale bar on the image.";
+      } else {
+        clearCalibration();
+      }
+      drawCanvas();
+    });
+
+    els.clearScaleBtn.addEventListener("click", () => {
+      clearCalibration();
+    });
+
+    els.canvas.addEventListener("click", (event) => {
+      if (!state.calibrating) return;
+      const point = getCanvasPoint(event);
+      state.calibrationPoints.push(point);
+      if (state.calibrationPoints.length === 1) {
+        els.scaleStatus.textContent = "Click the second end of the scale bar.";
+      } else {
+        state.calibrationPoints = state.calibrationPoints.slice(0, 2);
+        if (updateCalibrationFromPoints()) {
+          state.calibrating = false;
+          els.canvas.classList.remove("is-calibrating");
+          els.calibrateBtn.textContent = "Select scale bar";
+        }
+      }
+      drawCanvas();
+    });
+
+    els.scaleLength.addEventListener("input", () => {
+      if (state.calibrationPoints.length === 2) {
+        updateCalibrationFromPoints();
+        drawCanvas();
+      }
+    });
+
+    els.maxSide.addEventListener("change", () => {
+      if (!state.imageBitmap) return;
+      preparePreview("Image size changed for browser analysis. Run local analysis again.", "Scale calibration was reset for this image size. Select the scale bar again if needed.");
     });
 
     els.exampleBtn.addEventListener("click", loadExample);
     els.runBtn.addEventListener("click", runAnalysis);
+    resetMeasurements();
     loadExample();
   </script>
 </body>
