@@ -4,6 +4,10 @@ AI-assisted graphite nodule segmentation and statistics for ductile cast iron SE
 
 This repository provides a trained U-Net model, a browser demo, and a Python batch-analysis script. One public SEM example and reference overlay are provided for testing the workflow.
 
+## Purpose For Reviewers
+
+This repository provides a reviewer-accessible supplementary workflow for graphite nodule segmentation and quantitative statistics used in the associated ADI manuscript. The browser demo performs local ONNX inference and is intended for single-image inspection, overlay verification, and CSV export. For manuscript-level statistics, use the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters.
+
 ## Use In Browser
 
 Open the GitHub Pages app:
@@ -21,6 +25,8 @@ The browser app runs locally in the user's browser with ONNX Runtime Web. Upload
 
 For manuscript-level statistics, we used the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters. The browser tool is intended for reviewer inspection and single-image verification. Multi-page TIFF files are loaded from the first page.
 
+Reviewer quick test: click **Load example image**, keep the default probability threshold of 0.50, confirm the pixel size of 1.16279 μm/pixel, and click **Run local analysis**. The overlay and downloadable CSV files can be used to inspect segmentation quality and object-level statistics.
+
 ## Reviewer Validation Summary
 
 ### Public Example: AI vs ImageJ-Style Workflow
@@ -35,6 +41,8 @@ The public example was compared with a traditional ImageJ-style workflow: invert
 | Mean spheroidicity | 0.791 | 0.851 | 7.6% |
 
 Relative error is calculated against the ImageJ-style result. This is a public single-image sanity check rather than a fully independent expert-label benchmark. The U-Net values in this table are from the Python batch workflow used for formal statistics.
+
+The slightly larger difference in mean spheroidicity mainly reflects boundary-smoothing and watershed-splitting differences between threshold-based ImageJ-style segmentation and probability-map-based U-Net segmentation; count density and equivalent diameter remain highly consistent.
 
 ### Model and Workflow Metrics
 
@@ -65,10 +73,13 @@ python scripts/graphite_nodule_analyzer.py \
   --image-dir /path/to/sem_images \
   --checkpoint models/graphite_unet_seed7.pt \
   --output-dir /path/to/output \
-  --pixel-size-um YOUR_MICROMETRES_PER_PIXEL
+  --pixel-size-um 1.16279 \
+  --threshold 0.50 \
+  --min-area-px 25 \
+  --max-area-px 20000
 ```
 
-`--pixel-size-um` must be measured from the user's own SEM scale bar. For example, if a 100 μm scale bar spans 86 pixels, use `100/86 = 1.1627906976744187`.
+`--pixel-size-um` must be measured from the user's own SEM scale bar. For example, if a 100 μm scale bar spans 86 pixels, use `100/86 = 1.1627906976744187`. The example values above reproduce the public reviewer-check configuration.
 
 ## Outputs
 

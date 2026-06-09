@@ -244,8 +244,8 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, required=True, help="Directory for masks, overlays, and CSV outputs.")
     parser.add_argument("--pixel-size-um", type=float, required=True, help="SEM pixel size in micrometres per pixel.")
     parser.add_argument("--threshold", type=float, default=0.5, help="Probability threshold for graphite mask.")
-    parser.add_argument("--min-object-px", type=int, default=25, help="Minimum nodule area in pixels.")
-    parser.add_argument("--max-object-px", type=int, default=20000, help="Maximum nodule area in pixels.")
+    parser.add_argument("--min-object-px", "--min-area-px", dest="min_object_px", type=int, default=25, help="Minimum nodule area in pixels.")
+    parser.add_argument("--max-object-px", "--max-area-px", dest="max_object_px", type=int, default=20000, help="Maximum nodule area in pixels.")
     args = parser.parse_args()
 
     if args.pixel_size_um <= 0:

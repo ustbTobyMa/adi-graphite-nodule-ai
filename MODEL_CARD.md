@@ -18,6 +18,10 @@
 
 Only one SEM example and its reference overlay are included in this public repository. The broader manuscript image set is not released here to avoid unnecessary image-asset disclosure.
 
+## Reviewer Purpose
+
+This repository provides a reviewer-accessible supplementary workflow for graphite nodule segmentation and quantitative statistics used in the associated ADI manuscript. The browser demo supports single-image inspection and overlay verification; the Python batch workflow is the recommended route for reproducible manuscript-level statistics.
+
 ## Training Data Summary
 
 The model was trained on curated low-magnification SEM fields from the manuscript study. High-magnification, close-up, edge/defect, and qualitative fields were excluded from quantitative field-level training/statistics.
@@ -38,6 +42,8 @@ The public SEM example was checked against a traditional ImageJ-style workflow: 
 | Mean spheroidicity | 0.791 | 0.851 | 7.6% |
 
 Relative error is calculated against the ImageJ-style result. The U-Net values are from the Python batch workflow used for formal statistics. This single-image check is intended to make the released workflow auditable, not to replace a fully independent expert-label benchmark.
+
+The slightly larger difference in mean spheroidicity mainly reflects boundary-smoothing and watershed-splitting differences between threshold-based ImageJ-style segmentation and probability-map-based U-Net segmentation; count density and equivalent diameter remain highly consistent.
 
 ### Performance Metrics
 

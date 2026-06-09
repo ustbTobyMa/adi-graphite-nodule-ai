@@ -327,6 +327,24 @@
       color: var(--ink);
       background: #fffaf7;
     }
+    .purpose {
+      margin-top: 24px;
+      border-left: 4px solid var(--accent);
+      background: var(--soft);
+      border-radius: 8px;
+      padding: 16px 18px;
+      color: var(--muted);
+      max-width: 700px;
+    }
+    .purpose h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+    .purpose p {
+      margin: 0;
+      font-size: 14px;
+    }
     .table-wrap {
       width: 100%;
       overflow-x: auto;
@@ -396,6 +414,10 @@
       <div>
         <h1>Graphite nodule statistics directly from SEM images</h1>
         <p class="lead">Run a released U-Net model in your browser or use the Python script for batch analysis. Uploaded images stay on your computer; the browser demo performs local ONNX inference.</p>
+        <div class="purpose">
+          <h2>Purpose for reviewers</h2>
+          <p>This page provides a reviewer-accessible supplementary workflow for graphite nodule segmentation and quantitative statistics used in the associated ADI manuscript. The browser demo performs local ONNX inference and is intended for single-image inspection, overlay verification, and CSV export. For manuscript-level statistics, use the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters.</p>
+        </div>
         <div class="actions">
           <a class="button" href="#tool">Use the browser tool</a>
           <a class="button secondary" href="models/graphite_unet_seed7.pt">Download Python model</a>
@@ -436,6 +458,7 @@
                 </table>
               </div>
               <p class="hint">Comparator: inverted-grayscale Otsu thresholding and watershed, using the same 1.16279 μm/pixel scale and 25-20000 px object filters. Relative error is calculated against the traditional/ImageJ-style result. The U-Net values are from the Python batch workflow used for formal statistics.</p>
+              <p class="hint">The slightly larger difference in mean spheroidicity mainly reflects boundary-smoothing and watershed-splitting differences between threshold-based segmentation and probability-map-based U-Net segmentation; count density and equivalent diameter remain highly consistent.</p>
             </div>
           </div>
           <div class="panel">
@@ -474,6 +497,7 @@
           <p>Upload one representative low-magnification SEM field, enter the pixel size or select the scale bar, and run the model locally. Use the overlay as a quality check before using the metrics.</p>
         </div>
         <div class="note manuscript-note">For manuscript-level statistics, we used the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters. The browser tool is intended for reviewer inspection and single-image verification.</div>
+        <div class="note manuscript-note"><strong>Reviewer quick test:</strong> click Load example image, keep the default probability threshold of 0.50, confirm the pixel size of 1.16279 μm/pixel, and click Run local analysis. The overlay and downloadable CSV files can be used to inspect segmentation quality and object-level statistics.</div>
         <div class="tool">
           <div class="panel">
             <div class="panel-body">
@@ -567,7 +591,10 @@ python scripts/graphite_nodule_analyzer.py \
   --image-dir /path/to/sem_images \
   --checkpoint models/graphite_unet_seed7.pt \
   --output-dir /path/to/output \
-  --pixel-size-um YOUR_MICROMETRES_PER_PIXEL</code></pre>
+  --pixel-size-um 1.16279 \
+  --threshold 0.50 \
+  --min-area-px 25 \
+  --max-area-px 20000</code></pre>
       </div>
     </section>
 
