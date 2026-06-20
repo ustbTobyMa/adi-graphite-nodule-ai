@@ -2,7 +2,7 @@
 
 AI-assisted graphite nodule segmentation and statistics for ductile cast iron SEM images.
 
-This repository provides a trained U-Net model, a browser demo, and a Python batch-analysis script. One public SEM example and reference overlay are provided for testing the workflow.
+This repository provides a trained CNN-based computer-vision workflow, a browser demo, and a Python batch-analysis script. One public SEM example and reference overlay are provided for testing the workflow.
 
 ## Purpose For Reviewers
 
@@ -19,7 +19,7 @@ The browser app runs locally in the user's browser with ONNX Runtime Web. Upload
 - upload a SEM image
 - use common browser inputs including PNG, JPG/JPEG, BMP, WebP, TIF, and TIFF
 - enter the SEM pixel size in μm per source pixel, or calibrate it by selecting the two ends of a scale bar in the image
-- run the released U-Net model in the browser
+- run the released CNN-based computer-vision workflow in the browser
 - inspect the overlay and synchronized equivalent-diameter and spheroidicity histograms
 - download image-level and object-level CSV outputs
 
@@ -33,16 +33,16 @@ Reviewer quick test: click **Load example image**, keep the default probability 
 
 The public example was compared with a traditional ImageJ-style workflow: inverted-grayscale Otsu thresholding, watershed splitting, the same 1.16279 μm/pixel scale, and the same 25-20000 px object-size filters.
 
-| Metric | ImageJ-style workflow | Python U-Net batch | Relative error |
+| Metric | ImageJ-style workflow | Python CNN workflow | Relative error |
 | --- | ---: | ---: | ---: |
 | Nodule count | 180 | 178 | 1.1% |
 | Count density | 169.28 mm⁻² | 167.40 mm⁻² | 1.1% |
-| Mean diameter | 25.81 μm | 25.76 μm | 0.2% |
-| Mean spheroidicity | 0.791 | 0.851 | 7.6% |
+| Mean diameter | 25.81 μm | 25.75 μm | 0.2% |
+| Mean spheroidicity | 0.791 | 0.851 | 7.5% |
 
-Relative error is calculated against the ImageJ-style result. This is a public single-image sanity check rather than a fully independent expert-label benchmark. The U-Net values in this table are from the Python batch workflow used for formal statistics.
+Relative error is calculated against the ImageJ-style result. This is a public single-image sanity check rather than a fully independent expert-label benchmark. The CNN-workflow values in this table are from the Python batch workflow used for formal statistics.
 
-The slightly larger difference in mean spheroidicity mainly reflects boundary-smoothing and watershed-splitting differences between threshold-based ImageJ-style segmentation and probability-map-based U-Net segmentation; count density and equivalent diameter remain highly consistent.
+The slightly larger difference in mean spheroidicity mainly reflects boundary-smoothing and watershed-splitting differences between threshold-based ImageJ-style segmentation and probability-map-based CNN segmentation; count density and equivalent diameter remain highly consistent.
 
 ### Model and Workflow Metrics
 
@@ -104,6 +104,7 @@ models/graphite_unet_seed7.pt      Python model
 scripts/graphite_nodule_analyzer.py
 examples/images/sample_ductile_iron_sem.png
 examples/reference/sample_overlay.png
+examples/reference/sample_mask.png
 ```
 
 ## Recommended Image Input

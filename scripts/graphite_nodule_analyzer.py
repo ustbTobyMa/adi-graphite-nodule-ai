@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Analyze spheroidal graphite nodules in ductile cast iron SEM images.
 
-The script loads the released U-Net checkpoint, segments graphite nodules, and
+The script loads the released CNN segmentation checkpoint, segments graphite nodules, and
 exports image-level and object-level morphology statistics. Users must provide
 the physical pixel size from their own SEM scale bar.
 """
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import inspect
 import json
 import math
 from pathlib import Path
@@ -27,6 +28,20 @@ import matplotlib.pyplot as plt  # noqa: E402
 
 
 IMAGE_EXTENSIONS = {".tif", ".tiff", ".png", ".jpg", ".jpeg", ".bmp"}
+
+
+def remove_small_objects(mask: np.ndarray, min_size: int) -> np.ndarray:
+    params = inspect.signature(morphology.remove_small_objects).parameters
+    if "max_size" in params:
+        return morphology.remove_small_objects(mask, max_size=max(0, min_size - 1))
+    return morphology.remove_small_objects(mask, min_size=min_size)
+
+
+def remove_small_holes(mask: np.ndarray, area_threshold: int) -> np.ndarray:
+    params = inspect.signature(morphology.remove_small_holes).parameters
+    if "max_size" in params:
+        return morphology.remove_small_holes(mask, max_size=max(0, area_threshold - 1))
+    return morphology.remove_small_holes(mask, area_threshold=area_threshold)
 
 
 class DoubleConv(nn.Module):
@@ -105,8 +120,8 @@ def predict_probability(model: UNet, gray: np.ndarray, device: torch.device) -> 
 
 def postprocess_mask(probability: np.ndarray, threshold: float, min_object_px: int) -> np.ndarray:
     mask = probability > threshold
-    mask = morphology.remove_small_objects(mask, min_size=min_object_px)
-    mask = morphology.remove_small_holes(mask, area_threshold=39)
+    mask = remove_small_objects(mask, min_object_px)
+    mask = remove_small_holes(mask, 39)
     mask = morphology.closing(mask, morphology.disk(2))
     return mask.astype(bool)
 
@@ -240,7 +255,7 @@ def make_contact_sheet(overlay_dir: Path, output_path: Path, max_images: int = 1
 def main() -> None:
     parser = argparse.ArgumentParser(description="AI-assisted graphite nodule statistics for ductile cast iron SEM images.")
     parser.add_argument("--image-dir", type=Path, required=True, help="Directory containing SEM images.")
-    parser.add_argument("--checkpoint", type=Path, required=True, help="Released U-Net checkpoint.")
+    parser.add_argument("--checkpoint", type=Path, required=True, help="Released CNN segmentation checkpoint.")
     parser.add_argument("--output-dir", type=Path, required=True, help="Directory for masks, overlays, and CSV outputs.")
     parser.add_argument("--pixel-size-um", type=float, required=True, help="SEM pixel size in micrometres per pixel.")
     parser.add_argument("--threshold", type=float, default=0.5, help="Probability threshold for graphite mask.")

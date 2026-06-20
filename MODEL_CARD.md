@@ -1,9 +1,10 @@
-# Model Card: Graphite U-Net
+# Model Card: CNN-Based Graphite Nodule Segmentation Workflow
 
 ## Model
 
-- Name: `graphite_unet_seed7`
-- Architecture: compact 2D U-Net
+- Workflow name used in the manuscript: convolutional-neural-network-based computer-vision workflow
+- Released checkpoint ID: `graphite_unet_seed7`
+- Implementation architecture: compact 2D U-Net segmentation network
 - Inputs: grayscale SEM image
 - Outputs: graphite nodule probability map
 - Released formats: PyTorch checkpoint (`.pt`) and ONNX model (`.onnx`)
@@ -24,7 +25,7 @@ This repository provides a reviewer-accessible supplementary workflow for graphi
 
 ## Training Data Summary
 
-The model was trained on curated low-magnification SEM fields from the manuscript study. High-magnification, close-up, edge/defect, and qualitative fields were excluded from quantitative field-level training/statistics.
+The CNN segmentation network was trained on curated low-magnification SEM fields from the manuscript study. High-magnification, close-up, edge/defect, and qualitative fields were excluded from quantitative field-level training/statistics.
 
 The training masks were curated pseudo masks, so the held-out Dice values should be interpreted as agreement with curated pseudo-labels rather than a manual expert-label benchmark.
 
@@ -34,16 +35,16 @@ The training masks were curated pseudo masks, so the held-out Dice values should
 
 The public SEM example was checked against a traditional ImageJ-style workflow: inverted-grayscale Otsu thresholding, watershed splitting, the same 1.16279 μm/pixel scale, and the same 25-20000 px object-size filters.
 
-| Metric | ImageJ-style workflow | Python U-Net batch | Relative error |
+| Metric | ImageJ-style workflow | Python CNN workflow | Relative error |
 | --- | ---: | ---: | ---: |
 | Nodule count | 180 | 178 | 1.1% |
 | Count density | 169.28 mm⁻² | 167.40 mm⁻² | 1.1% |
-| Mean diameter | 25.81 μm | 25.76 μm | 0.2% |
-| Mean spheroidicity | 0.791 | 0.851 | 7.6% |
+| Mean diameter | 25.81 μm | 25.75 μm | 0.2% |
+| Mean spheroidicity | 0.791 | 0.851 | 7.5% |
 
-Relative error is calculated against the ImageJ-style result. The U-Net values are from the Python batch workflow used for formal statistics. This single-image check is intended to make the released workflow auditable, not to replace a fully independent expert-label benchmark.
+Relative error is calculated against the ImageJ-style result. The CNN-workflow values are from the Python batch workflow used for formal statistics. This single-image check is intended to make the released workflow auditable, not to replace a fully independent expert-label benchmark.
 
-The slightly larger difference in mean spheroidicity mainly reflects boundary-smoothing and watershed-splitting differences between threshold-based ImageJ-style segmentation and probability-map-based U-Net segmentation; count density and equivalent diameter remain highly consistent.
+The slightly larger difference in mean spheroidicity mainly reflects boundary-smoothing and watershed-splitting differences between threshold-based ImageJ-style segmentation and probability-map-based CNN segmentation; count density and equivalent diameter remain highly consistent.
 
 ### Performance Metrics
 
