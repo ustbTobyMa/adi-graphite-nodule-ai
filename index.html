@@ -494,18 +494,17 @@
       <div class="wrap">
         <div class="section-head">
           <h2>Browser tool</h2>
-          <p>Upload one representative low-magnification SEM field, enter the pixel size or select the scale bar, and run the model locally. Use the overlay as a quality check before using the metrics.</p>
+          <p>A public SEM example is loaded automatically. Reviewers can run the analysis immediately, or upload one representative low-magnification SEM field and then inspect the overlay before using the metrics.</p>
         </div>
         <div class="note manuscript-note">For manuscript-level statistics, we used the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters. The browser tool is intended for reviewer inspection and single-image verification.</div>
-        <div class="note manuscript-note"><strong>Reviewer quick test:</strong> click Load example image, keep the default probability threshold of 0.50, confirm the pixel size of 1.16279 μm/pixel, and click Run local analysis. The overlay and downloadable CSV files can be used to inspect segmentation quality and object-level statistics.</div>
+        <div class="note manuscript-note"><strong>Reviewer quick test:</strong> the public example image is loaded by default. Keep the probability threshold at 0.50, confirm the pixel size of 1.16279 μm/pixel, and click Run local analysis. The overlay and downloadable CSV files can be used to inspect segmentation quality and object-level statistics.</div>
         <div class="tool">
           <div class="panel">
             <div class="panel-body">
               <h3>Input and settings</h3>
-              <button id="exampleBtn" class="secondary" type="button">Load example image</button>
               <label for="imageInput">SEM image</label>
               <input id="imageInput" type="file" accept="image/png,image/jpeg,image/bmp,image/webp,image/tiff,image/x-tiff,.png,.jpg,.jpeg,.bmp,.webp,.tif,.tiff">
-              <p class="hint">Supported single-image inputs: PNG, JPG/JPEG, BMP, WebP, TIF, and TIFF. Multi-page TIFF files use the first page.</p>
+              <p class="hint">The public example image is loaded automatically. Uploading a file replaces it. Supported single-image inputs: PNG, JPG/JPEG, BMP, WebP, TIF, and TIFF. Multi-page TIFF files use the first page.</p>
               <label for="pixelSize">Source pixel size (μm/pixel)</label>
               <input id="pixelSize" type="number" min="0.0001" step="0.0001" value="1.1627906976744187">
               <p class="hint">Manual values should come from the original SEM image. If the browser downsizes the image, the app converts this value before measuring objects.</p>
@@ -536,7 +535,7 @@
               <div class="actions">
                 <button id="runBtn" type="button">Run local analysis</button>
               </div>
-              <div id="status" class="status">Model will be downloaded to your browser when analysis starts.</div>
+              <div id="status" class="status">Loading the public example image...</div>
               <div class="downloads">
                 <a id="imageCsvLink" class="button secondary" href="#" download="image_summary.csv" style="display:none;">Download image CSV</a>
                 <a id="objectCsvLink" class="button secondary" href="#" download="component_measurements.csv" style="display:none;">Download object CSV</a>
@@ -636,7 +635,6 @@ python scripts/graphite_nodule_analyzer.py \
     };
 
     const els = {
-      exampleBtn: document.getElementById("exampleBtn"),
       imageInput: document.getElementById("imageInput"),
       pixelSize: document.getElementById("pixelSize"),
       scaleLength: document.getElementById("scaleLength"),
@@ -1062,7 +1060,7 @@ python scripts/graphite_nodule_analyzer.py \
 
     async function runAnalysis() {
       if (!state.imageBitmap) {
-        setStatus("Load the example image or choose a local SEM image first.");
+        setStatus("The public example image has not finished loading. Wait a moment or choose a local SEM image.");
         return;
       }
       const threshold = Number(els.threshold.value);
@@ -1203,7 +1201,6 @@ python scripts/graphite_nodule_analyzer.py \
       preparePreview("Image size changed for browser analysis. Run local analysis again.", "Scale calibration was reset for this image size. Select the scale bar again if needed.");
     });
 
-    els.exampleBtn.addEventListener("click", loadExample);
     els.runBtn.addEventListener("click", runAnalysis);
     resetMeasurements();
     loadExample();

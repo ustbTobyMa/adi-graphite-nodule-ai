@@ -25,7 +25,7 @@ The browser app runs locally in the user's browser with ONNX Runtime Web. Upload
 
 For manuscript-level statistics, we used the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters. The browser tool is intended for reviewer inspection and single-image verification. Multi-page TIFF files are loaded from the first page.
 
-Reviewer quick test: click **Load example image**, keep the default probability threshold of 0.50, confirm the pixel size of 1.16279 μm/pixel, and click **Run local analysis**. The overlay and downloadable CSV files can be used to inspect segmentation quality and object-level statistics.
+Reviewer quick test: the public example image is loaded by default. Keep the default probability threshold of 0.50, confirm the pixel size of 1.16279 μm/pixel, and click **Run local analysis**. The overlay and downloadable CSV files can be used to inspect segmentation quality and object-level statistics.
 
 ## Reviewer Validation Summary
 
