@@ -175,7 +175,7 @@
       font-weight: 720;
       color: #31443d;
     }
-    input[type="number"], input[type="file"] {
+    input[type="number"] {
       width: 100%;
       border: 1px solid var(--line);
       border-radius: 7px;
@@ -185,6 +185,58 @@
       color: var(--ink);
     }
     input[type="range"] { width: 100%; }
+    .file-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    .file-control {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      margin-top: 6px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+    }
+    .file-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      margin: 0;
+      white-space: nowrap;
+    }
+    .file-name {
+      min-width: 0;
+      color: var(--muted);
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .primary-action {
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid #9bc0ba;
+      border-radius: 8px;
+      background: #edf6f3;
+    }
+    .run-primary {
+      width: 100%;
+      min-height: 48px;
+      font-size: 16px;
+      background: var(--accent);
+      box-shadow: 0 10px 24px rgba(31, 102, 105, 0.18);
+    }
     .hint {
       margin: 6px 0 0;
       color: var(--muted);
@@ -502,8 +554,16 @@
           <div class="panel">
             <div class="panel-body">
               <h3>Input and settings</h3>
+              <div class="primary-action">
+                <button id="runBtn" class="run-primary" type="button">Run local analysis</button>
+                <p class="hint">The public example is loaded by default. Start here for the reviewer quick test.</p>
+              </div>
               <label for="imageInput">SEM image</label>
-              <input id="imageInput" type="file" accept="image/png,image/jpeg,image/bmp,image/webp,image/tiff,image/x-tiff,.png,.jpg,.jpeg,.bmp,.webp,.tif,.tiff">
+              <input id="imageInput" class="file-input" type="file" accept="image/png,image/jpeg,image/bmp,image/webp,image/tiff,image/x-tiff,.png,.jpg,.jpeg,.bmp,.webp,.tif,.tiff">
+              <div class="file-control">
+                <label class="button secondary file-button" for="imageInput">Choose file</label>
+                <span id="fileNameLabel" class="file-name">Default example: sample_ductile_iron_sem.png</span>
+              </div>
               <p class="hint">The public example image is loaded automatically. Uploading a file replaces it. Supported single-image inputs: PNG, JPG/JPEG, BMP, WebP, TIF, and TIFF. Multi-page TIFF files use the first page.</p>
               <label for="pixelSize">Source pixel size (μm/pixel)</label>
               <input id="pixelSize" type="number" min="0.0001" step="0.0001" value="1.1627906976744187">
@@ -532,9 +592,6 @@
               </div>
               <label for="maxSide">Max browser-analysis side (px)</label>
               <input id="maxSide" type="number" min="256" max="1024" step="16" value="1024">
-              <div class="actions">
-                <button id="runBtn" type="button">Run local analysis</button>
-              </div>
               <div id="status" class="status">Loading the public example image...</div>
               <div class="downloads">
                 <a id="imageCsvLink" class="button secondary" href="#" download="image_summary.csv" style="display:none;">Download image CSV</a>
@@ -636,6 +693,7 @@ python scripts/graphite_nodule_analyzer.py \
 
     const els = {
       imageInput: document.getElementById("imageInput"),
+      fileNameLabel: document.getElementById("fileNameLabel"),
       pixelSize: document.getElementById("pixelSize"),
       scaleLength: document.getElementById("scaleLength"),
       calibrateBtn: document.getElementById("calibrateBtn"),
@@ -1045,6 +1103,7 @@ python scripts/graphite_nodule_analyzer.py \
       const blob = await response.blob();
       state.imageBitmap = await createImageBitmap(blob);
       state.fileName = "sample_ductile_iron_sem.png";
+      els.fileNameLabel.textContent = "Default example: sample_ductile_iron_sem.png";
       preparePreview("Example image loaded. Run local analysis to segment nodules.");
     }
 
@@ -1142,6 +1201,7 @@ python scripts/graphite_nodule_analyzer.py \
         setStatus(`Loading ${file.name}...`);
         state.imageBitmap = await loadImageFile(file);
         state.fileName = file.name;
+        els.fileNameLabel.textContent = file.name;
         preparePreview(`${file.name} loaded. Run local analysis to segment nodules.`);
       } catch (error) {
         console.error(error);
