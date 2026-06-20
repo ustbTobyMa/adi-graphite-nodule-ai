@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Graphite Nodule AI</title>
-  <meta name="description" content="Browser and Python tools for graphite nodule segmentation in ductile cast iron SEM images.">
+  <meta name="description" content="Browser and Python tools for graphite nodule segmentation in ductile cast iron microscopy images.">
   <style>
     :root {
       --bg: #f6f7f4;
@@ -464,7 +464,7 @@
   <main>
     <div class="hero">
       <div>
-        <h1>Graphite nodule statistics directly from SEM images</h1>
+        <h1>Graphite nodule statistics directly from microscopy images</h1>
         <p class="lead">Run the released CNN-based computer-vision workflow in your browser or use the Python script for batch analysis. Uploaded images stay on your computer; the browser demo performs local ONNX inference.</p>
         <div class="purpose">
           <h2>Purpose for reviewers</h2>
@@ -546,7 +546,7 @@
       <div class="wrap">
         <div class="section-head">
           <h2>Browser tool</h2>
-          <p>A public SEM example is loaded automatically. Reviewers can run the analysis immediately, or upload one representative low-magnification SEM field and then inspect the overlay before using the metrics.</p>
+          <p>A public SEM example is loaded automatically. Reviewers can run the analysis immediately, or upload one representative low-magnification microscopy field and then inspect the overlay before using the metrics.</p>
         </div>
         <div class="note manuscript-note">For manuscript-level statistics, we used the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters. The browser tool is intended for reviewer inspection and single-image verification.</div>
         <div class="note manuscript-note"><strong>Reviewer quick test:</strong> the public example image is loaded by default. Keep the probability threshold at 0.50, confirm the pixel size of 1.16279 μm/pixel, and click Run local analysis. The overlay and downloadable CSV files can be used to inspect segmentation quality and object-level statistics.</div>
@@ -558,7 +558,7 @@
                 <button id="runBtn" class="run-primary" type="button">Run local analysis</button>
                 <p class="hint">The public example is loaded by default. Start here for the reviewer quick test.</p>
               </div>
-              <label for="imageInput">SEM image</label>
+              <label for="imageInput">Microscopy image</label>
               <input id="imageInput" class="file-input" type="file" accept="image/png,image/jpeg,image/bmp,image/webp,image/tiff,image/x-tiff,.png,.jpg,.jpeg,.bmp,.webp,.tif,.tiff">
               <div class="file-control">
                 <label class="button secondary file-button" for="imageInput">Choose file</label>
@@ -567,7 +567,7 @@
               <p class="hint">The public example image is loaded automatically. Uploading a file replaces it. Supported single-image inputs: PNG, JPG/JPEG, BMP, WebP, TIF, and TIFF. Multi-page TIFF files use the first page.</p>
               <label for="pixelSize">Source pixel size (μm/pixel)</label>
               <input id="pixelSize" type="number" min="0.0001" step="0.0001" value="1.1627906976744187">
-              <p class="hint">Manual values should come from the original SEM image. If the browser downsizes the image, the app converts this value before measuring objects.</p>
+              <p class="hint">Manual values should come from the original microscopy image. If the browser downsizes the image, the app converts this value before measuring objects.</p>
               <div class="calibration-box">
                 <h3>Scale-bar calibration</h3>
                 <label for="scaleLength">Scale-bar length (μm)</label>
@@ -1119,7 +1119,7 @@ python scripts/graphite_nodule_analyzer.py \
 
     async function runAnalysis() {
       if (!state.imageBitmap) {
-        setStatus("The public example image has not finished loading. Wait a moment or choose a local SEM image.");
+        setStatus("The public example image has not finished loading. Wait a moment or choose a local microscopy image.");
         return;
       }
       const threshold = Number(els.threshold.value);

@@ -1,6 +1,6 @@
 # Graphite Nodule AI
 
-AI-assisted graphite nodule segmentation and statistics for ductile cast iron SEM images.
+AI-assisted graphite nodule segmentation and statistics for ductile cast iron microscopy images.
 
 This repository provides a trained CNN-based computer-vision workflow, a browser demo, and a Python batch-analysis script. One public SEM example and reference overlay are provided for testing the workflow.
 
@@ -14,11 +14,11 @@ Open the GitHub Pages app:
 
 https://ustbTobyMa.github.io/adi-graphite-nodule-ai/
 
-The browser app runs locally in the user's browser with ONNX Runtime Web. Uploaded SEM images are not sent to a server. Users can:
+The browser app runs locally in the user's browser with ONNX Runtime Web. Uploaded microscopy images are not sent to a server. Users can:
 
-- upload a SEM image
+- upload a microscopy image
 - use common browser inputs including PNG, JPG/JPEG, BMP, WebP, TIF, and TIFF
-- enter the SEM pixel size in μm per source pixel, or calibrate it by selecting the two ends of a scale bar in the image
+- enter the microscopy pixel size in μm per source pixel, or calibrate it by selecting the two ends of a scale bar in the image
 - run the released CNN-based computer-vision workflow in the browser
 - inspect the overlay and synchronized equivalent-diameter and spheroidicity histograms
 - download image-level and object-level CSV outputs
@@ -79,7 +79,7 @@ python scripts/graphite_nodule_analyzer.py \
   --max-area-px 20000
 ```
 
-`--pixel-size-um` must be measured from the user's own SEM scale bar. For example, if a 100 μm scale bar spans 86 pixels, use `100/86 = 1.1627906976744187`. The example values above reproduce the public reviewer-check configuration.
+`--pixel-size-um` must be measured from the user's own microscopy scale bar. For example, if a 100 μm scale bar spans 86 pixels, use `100/86 = 1.1627906976744187`. The example values above reproduce the public reviewer-check configuration.
 
 ## Outputs
 
@@ -111,7 +111,7 @@ examples/reference/sample_mask.png
 
 Use images similar to the training domain:
 
-- polished ductile cast iron SEM fields
+- polished ductile cast iron microscopy fields
 - representative low-magnification fields for field-level statistics
 - graphite nodules visible as dark features in a lighter matrix
 

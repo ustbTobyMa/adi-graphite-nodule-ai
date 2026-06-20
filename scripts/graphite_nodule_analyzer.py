@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Analyze spheroidal graphite nodules in ductile cast iron SEM images.
+"""Analyze spheroidal graphite nodules in ductile cast iron microscopy images.
 
 The script loads the released CNN segmentation checkpoint, segments graphite nodules, and
 exports image-level and object-level morphology statistics. Users must provide
-the physical pixel size from their own SEM scale bar.
+the physical pixel size from their own microscopy scale bar.
 """
 
 from __future__ import annotations
@@ -253,18 +253,18 @@ def make_contact_sheet(overlay_dir: Path, output_path: Path, max_images: int = 1
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="AI-assisted graphite nodule statistics for ductile cast iron SEM images.")
-    parser.add_argument("--image-dir", type=Path, required=True, help="Directory containing SEM images.")
+    parser = argparse.ArgumentParser(description="AI-assisted graphite nodule statistics for ductile cast iron microscopy images.")
+    parser.add_argument("--image-dir", type=Path, required=True, help="Directory containing microscopy images.")
     parser.add_argument("--checkpoint", type=Path, required=True, help="Released CNN segmentation checkpoint.")
     parser.add_argument("--output-dir", type=Path, required=True, help="Directory for masks, overlays, and CSV outputs.")
-    parser.add_argument("--pixel-size-um", type=float, required=True, help="SEM pixel size in micrometres per pixel.")
+    parser.add_argument("--pixel-size-um", type=float, required=True, help="Microscopy pixel size in micrometres per pixel.")
     parser.add_argument("--threshold", type=float, default=0.5, help="Probability threshold for graphite mask.")
     parser.add_argument("--min-object-px", "--min-area-px", dest="min_object_px", type=int, default=25, help="Minimum nodule area in pixels.")
     parser.add_argument("--max-object-px", "--max-area-px", dest="max_object_px", type=int, default=20000, help="Maximum nodule area in pixels.")
     args = parser.parse_args()
 
     if args.pixel_size_um <= 0:
-        raise ValueError("--pixel-size-um must be positive. Measure it from your SEM scale bar.")
+        raise ValueError("--pixel-size-um must be positive. Measure it from your microscopy scale bar.")
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     for subdir in ["masks", "overlays", "probability"]:
