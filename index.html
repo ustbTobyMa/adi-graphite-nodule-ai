@@ -276,10 +276,41 @@
       min-height: 44px;
     }
     .canvas-wrap {
+      position: relative;
       min-height: 420px;
       background: #1a1d1b;
       display: grid;
       place-items: center;
+    }
+    .analysis-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: calc(100% - 28px);
+      border: 1px solid rgba(255, 255, 255, 0.34);
+      border-radius: 999px;
+      padding: 8px 12px;
+      color: #fff;
+      background: rgba(23, 32, 27, 0.72);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+      backdrop-filter: blur(8px);
+      font-size: 13px;
+      font-weight: 760;
+      line-height: 1.1;
+      pointer-events: none;
+    }
+    .analysis-badge[hidden] { display: none; }
+    .analysis-badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #78d18f;
+      box-shadow: 0 0 0 4px rgba(120, 209, 143, 0.18);
+      flex: 0 0 auto;
     }
     #overlayCanvas {
       width: 100%;
@@ -545,6 +576,10 @@
             <div class="panel">
               <div class="canvas-wrap">
                 <canvas id="overlayCanvas" width="768" height="576" aria-label="Segmentation overlay"></canvas>
+                <div id="analysisBadge" class="analysis-badge" hidden aria-live="polite">
+                  <span class="analysis-badge-dot" aria-hidden="true"></span>
+                  Analysis complete
+                </div>
               </div>
             </div>
             <div class="metrics" aria-live="polite">
@@ -675,6 +710,7 @@
       runBtn: document.getElementById("runBtn"),
       status: document.getElementById("status"),
       canvas: document.getElementById("overlayCanvas"),
+      analysisBadge: document.getElementById("analysisBadge"),
       mCount: document.getElementById("mCount"),
       mDensity: document.getElementById("mDensity"),
       mDiameter: document.getElementById("mDiameter"),
@@ -689,6 +725,14 @@
 
     function setStatus(text) {
       els.status.textContent = text;
+    }
+
+    function setAnalysisComplete(complete) {
+      els.analysisBadge.hidden = !complete;
+    }
+
+    function markAnalysisStale() {
+      setAnalysisComplete(false);
     }
 
     function revokeUrls() {
@@ -768,6 +812,7 @@
     }
 
     function resetMeasurements() {
+      setAnalysisComplete(false);
       els.mCount.textContent = "-";
       els.mDensity.textContent = "-";
       els.mDiameter.textContent = "-";
@@ -779,6 +824,7 @@
     }
 
     function clearCalibration(message) {
+      markAnalysisStale();
       state.calibrationPoints = [];
       state.calibration = null;
       state.calibrating = false;
@@ -803,6 +849,7 @@
       }
       const analysisPixelSize = lengthUm / distancePx;
       state.calibration = { lengthUm, distancePx, analysisPixelSize, width: els.canvas.width, height: els.canvas.height };
+      markAnalysisStale();
       els.scaleStatus.textContent = `Calibrated: ${analysisPixelSize.toPrecision(6)} μm per analyzed pixel from ${distancePx.toFixed(1)} px.`;
       return true;
     }
@@ -1097,6 +1144,7 @@
       const sourcePixelSize = Number(els.pixelSize.value);
 
       els.runBtn.disabled = true;
+      setAnalysisComplete(false);
       revokeUrls();
       els.imageCsvLink.style.display = "none";
       els.objectCsvLink.style.display = "none";
@@ -1149,9 +1197,11 @@
         drawHistogram(els.circularityHist, circularities, { label: "Circularity", color: "#a94632", min: 0, max: 1, bins: 10, tickDigits: 1 });
         makeDownload(els.imageCsvLink, toCsv([imageRow]), "image_summary.csv");
         makeDownload(els.objectCsvLink, toCsv(objectRows), "component_measurements.csv");
+        setAnalysisComplete(true);
         setStatus("Analysis complete. Inspect the overlay before using the metrics.");
       } catch (error) {
         console.error(error);
+        setAnalysisComplete(false);
         setStatus(`Analysis failed: ${error.message}`);
       } finally {
         els.runBtn.disabled = false;
@@ -1159,7 +1209,12 @@
     }
 
     els.threshold.addEventListener("input", () => {
+      markAnalysisStale();
       els.thresholdLabel.textContent = Number(els.threshold.value).toFixed(2);
+    });
+
+    [els.pixelSize, els.minArea, els.maxArea].forEach((input) => {
+      input.addEventListener("input", markAnalysisStale);
     });
 
     els.imageInput.addEventListener("change", async (event) => {
@@ -1185,6 +1240,7 @@
       }
       state.calibrating = !state.calibrating;
       if (state.calibrating) {
+        markAnalysisStale();
         state.calibrationPoints = [];
         state.calibration = null;
         els.canvas.classList.add("is-calibrating");
@@ -1219,6 +1275,7 @@
 
     els.scaleLength.addEventListener("input", () => {
       if (state.calibrationPoints.length === 2) {
+        markAnalysisStale();
         updateCalibrationFromPoints();
         drawCanvas();
       }
