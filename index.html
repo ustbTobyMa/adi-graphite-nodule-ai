@@ -374,6 +374,35 @@
       font-size: 14px;
     }
     .details-box p { margin: 14px 0 0; }
+    .paper-panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(18, 32, 28, 0.06);
+    }
+    .paper-title {
+      margin: 0;
+      max-width: 900px;
+      font-size: clamp(20px, 2vw, 28px);
+      line-height: 1.2;
+      font-weight: 800;
+      color: var(--ink);
+    }
+    .paper-meta {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 10px 16px;
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .paper-meta dt {
+      margin: 0;
+      color: #31443d;
+      font-weight: 760;
+    }
+    .paper-meta dd { margin: 0; }
     .charts {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -484,6 +513,7 @@
       nav, .hero, section { padding-left: 16px; padding-right: 16px; }
       .actions .button, .actions button { width: 100%; }
       .inline, .metrics, .validation-cards { grid-template-columns: 1fr; }
+      .paper-meta { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -495,6 +525,7 @@
         <a href="#tool">Tool</a>
         <a href="#validation">Validation</a>
         <a href="#batch">Batch use</a>
+        <a href="#paper">Paper</a>
         <a href="https://github.com/ustbTobyMa/adi-graphite-nodule-ai">GitHub</a>
       </div>
     </nav>
@@ -665,6 +696,29 @@
         <div class="actions">
           <a class="button" href="https://github.com/ustbTobyMa/adi-graphite-nodule-ai">Open GitHub repository</a>
           <a class="button secondary" href="models/graphite_unet_seed7.pt">Download Python model</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="paper">
+      <div class="wrap">
+        <div class="section-head">
+          <h2>Associated manuscript</h2>
+          <p>This browser tool and Python workflow were developed to support quantitative graphite-feature analysis in the associated ADI study.</p>
+        </div>
+        <div class="paper-panel">
+          <p class="paper-title">Explainable data-driven design of austempered ductile iron: linking microstructure to strength-ductility synergy</p>
+          <dl class="paper-meta">
+            <dt>Authors</dt>
+            <dd>Weitao Ma, Xinwei Wang, Zheyue Zhang, Zixuan Liu, Mengjian Liu, Shuai Zhao, Renbo Song, and Yongjin Wang</dd>
+            <dt>Journal</dt>
+            <dd>Materials Science &amp; Engineering A</dd>
+            <dt>Institution</dt>
+            <dd>University of Science and Technology Beijing</dd>
+            <dt>Repository</dt>
+            <dd><a href="https://github.com/ustbTobyMa/adi-graphite-nodule-ai">github.com/ustbTobyMa/adi-graphite-nodule-ai</a></dd>
+          </dl>
+          <p class="hint">If you use this workflow, please cite the associated manuscript and this repository.</p>
         </div>
       </div>
     </section>
