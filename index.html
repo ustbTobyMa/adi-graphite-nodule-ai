@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Graphite Nodule AI</title>
+  <title>Graphite Nodule Analyzer</title>
   <meta name="description" content="Browser and Python tools for graphite nodule segmentation in ductile cast iron microscopy images.">
   <style>
     :root {
@@ -311,6 +311,38 @@
       color: var(--muted);
       font-size: 12px;
     }
+    .metric-note {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .validation-cards {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .details-box {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .details-box summary {
+      cursor: pointer;
+      padding: 14px 16px;
+      font-weight: 760;
+      color: #31443d;
+    }
+    .details-box .details-body {
+      border-top: 1px solid var(--line);
+      padding: 0 16px 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .details-box p { margin: 14px 0 0; }
     .charts {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -374,29 +406,6 @@
       color: var(--muted);
       font-size: 14px;
     }
-    .note.manuscript-note {
-      margin: 0 0 18px;
-      color: var(--ink);
-      background: #fffaf7;
-    }
-    .purpose {
-      margin-top: 24px;
-      border-left: 4px solid var(--accent);
-      background: var(--soft);
-      border-radius: 8px;
-      padding: 16px 18px;
-      color: var(--muted);
-      max-width: 700px;
-    }
-    .purpose h2 {
-      margin: 0 0 8px;
-      font-size: 18px;
-      line-height: 1.2;
-    }
-    .purpose p {
-      margin: 0;
-      font-size: 14px;
-    }
     .table-wrap {
       width: 100%;
       overflow-x: auto;
@@ -437,25 +446,24 @@
       .hero, .section-head, .tool, .grid-2 { grid-template-columns: 1fr; }
       .hero { padding-top: 38px; }
       .charts { grid-template-columns: 1fr; }
-      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .metrics, .validation-cards { grid-template-columns: repeat(2, 1fr); }
       .nav-links { display: none; }
     }
     @media (max-width: 560px) {
       nav, .hero, section { padding-left: 16px; padding-right: 16px; }
       .actions .button, .actions button { width: 100%; }
-      .inline, .metrics { grid-template-columns: 1fr; }
+      .inline, .metrics, .validation-cards { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <header>
     <nav>
-      <div class="brand"><span class="mark" aria-hidden="true"></span><span>Graphite Nodule AI</span></div>
+      <div class="brand"><span class="mark" aria-hidden="true"></span><span>Graphite Nodule Analyzer</span></div>
       <div class="nav-links">
+        <a href="#tool">Tool</a>
         <a href="#validation">Validation</a>
-        <a href="#tool">Web tool</a>
-        <a href="#python">Python</a>
-        <a href="#files">Files</a>
+        <a href="#batch">Batch use</a>
         <a href="https://github.com/ustbTobyMa/adi-graphite-nodule-ai">GitHub</a>
       </div>
     </nav>
@@ -464,99 +472,33 @@
   <main>
     <div class="hero">
       <div>
-        <h1>Graphite nodule statistics directly from microscopy images</h1>
-        <p class="lead">Run the released CNN-based computer-vision workflow in your browser or use the Python script for batch analysis. Uploaded images stay on your computer; the browser demo performs local ONNX inference.</p>
-        <div class="purpose">
-          <h2>Purpose for reviewers</h2>
-          <p>This page provides a reviewer-accessible supplementary workflow for graphite nodule segmentation and quantitative statistics used in the associated ADI manuscript. The browser demo performs local ONNX inference and is intended for single-image inspection, overlay verification, and CSV export. For manuscript-level statistics, use the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters.</p>
-        </div>
+        <h1>Graphite Nodule Analyzer</h1>
+        <p class="lead">AI-assisted segmentation and quantitative analysis of graphite nodules in ductile iron microscopy images.</p>
+        <p class="lead">Run the analysis directly in your browser or use the Python workflow for batch processing. Images uploaded to the browser are processed locally and are not sent to a remote server.</p>
         <div class="actions">
-          <a class="button" href="#tool">Use the browser tool</a>
-          <a class="button secondary" href="models/graphite_unet_seed7.pt">Download Python model</a>
+          <a class="button" href="#tool">Try the example</a>
+          <a class="button secondary" href="https://github.com/ustbTobyMa/adi-graphite-nodule-ai">View on GitHub</a>
         </div>
       </div>
       <div class="media-frame">
         <img src="assets/sample_overlay.png" alt="Example graphite nodule segmentation overlay">
-        <div class="caption">One public SEM example and reference overlay are provided. The full manuscript image set is not published in this repository.</div>
+        <div class="caption">Sample graphite nodule segmentation overlay. The full manuscript image set is not published in this repository.</div>
       </div>
     </div>
-
-    <section id="validation">
-      <div class="wrap">
-        <div class="section-head">
-          <h2>Reviewer validation</h2>
-          <p>The public repository includes one SEM example for direct inspection, plus cautious validation metrics for the released Python CNN-based computer-vision workflow.</p>
-        </div>
-        <div class="grid-2">
-          <div class="panel">
-            <div class="panel-body">
-              <h3>Public example: AI vs traditional/ImageJ-style workflow</h3>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Metric</th>
-                      <th>Traditional/ImageJ-style</th>
-                      <th>Python CNN workflow</th>
-                      <th>Relative error</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>Nodule count</td><td>180</td><td>178</td><td>1.1%</td></tr>
-                    <tr><td>Count density</td><td>169.28 mm⁻²</td><td>167.40 mm⁻²</td><td>1.1%</td></tr>
-                    <tr><td>Mean diameter</td><td>25.81 μm</td><td>25.75 μm</td><td>0.2%</td></tr>
-                    <tr><td>Mean spheroidicity</td><td>0.791</td><td>0.851</td><td>7.5%</td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <p class="hint">Comparator: inverted-grayscale Otsu thresholding and watershed, using the same 1.16279 μm/pixel scale and 25-20000 px object filters. Relative error is calculated against the traditional/ImageJ-style result. The CNN-workflow values are from the Python batch workflow used for formal statistics.</p>
-              <p class="hint">The slightly larger difference in mean spheroidicity mainly reflects boundary-smoothing and watershed-splitting differences between threshold-based segmentation and probability-map-based CNN segmentation; count density and equivalent diameter remain highly consistent.</p>
-            </div>
-          </div>
-          <div class="panel">
-            <div class="panel-body">
-              <h3>Model performance summary</h3>
-              <div class="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Metric</th>
-                      <th>Value</th>
-                      <th>Scope</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>Dice coefficient</td><td>0.963</td><td>Held-out curated masks</td></tr>
-                    <tr><td>IoU</td><td>0.929</td><td>Held-out curated masks</td></tr>
-                    <tr><td>Precision / recall</td><td>0.933 / 0.995</td><td>Held-out curated masks</td></tr>
-                    <tr><td>Nodule-count MAE</td><td>2.33 nodules</td><td>Two-seed repeatability</td></tr>
-                    <tr><td>Area-fraction difference</td><td>0.20 percentage points</td><td>Public traditional/ImageJ-style check</td></tr>
-                    <tr><td>Count-density MAE</td><td>2.19 mm⁻²</td><td>Two-seed repeatability</td></tr>
-                  </tbody>
-                </table>
-              </div>
-              <p class="hint">The reported validation metrics quantify agreement with curated reference masks rather than a fully independent expert-labeled benchmark.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section id="tool">
       <div class="wrap">
         <div class="section-head">
-          <h2>Browser tool</h2>
-          <p>A public SEM example is loaded automatically. Reviewers can run the analysis immediately, or upload one representative low-magnification microscopy field and then inspect the overlay before using the metrics.</p>
+          <h2>Analyze an image</h2>
+          <p>A sample image is loaded automatically. Click Run analysis to try the workflow, or upload your own microscopy image.</p>
         </div>
-        <div class="note manuscript-note">For manuscript-level statistics, we used the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters. The browser tool is intended for reviewer inspection and single-image verification.</div>
-        <div class="note manuscript-note"><strong>Reviewer quick test:</strong> the public example image is loaded by default. Keep the probability threshold at 0.50, confirm the pixel size of 1.16279 μm/pixel, and click Run local analysis. The overlay and downloadable CSV files can be used to inspect segmentation quality and object-level statistics.</div>
         <div class="tool">
           <div class="panel">
             <div class="panel-body">
               <h3>Input and settings</h3>
               <div class="primary-action">
-                <button id="runBtn" class="run-primary" type="button">Run local analysis</button>
-                <p class="hint">The public example is loaded by default. Start here for the reviewer quick test.</p>
+                <button id="runBtn" class="run-primary" type="button">Run analysis</button>
+                <p class="hint">The sample image is loaded by default. Start here to try the workflow.</p>
               </div>
               <label for="imageInput">Microscopy image</label>
               <input id="imageInput" class="file-input" type="file" accept="image/png,image/jpeg,image/bmp,image/webp,image/tiff,image/x-tiff,.png,.jpg,.jpeg,.bmp,.webp,.tif,.tiff">
@@ -564,7 +506,7 @@
                 <label class="button secondary file-button" for="imageInput">Choose file</label>
                 <span id="fileNameLabel" class="file-name">Default example: sample_ductile_iron_sem.png</span>
               </div>
-              <p class="hint">The public example image is loaded automatically. Uploading a file replaces it. Supported single-image inputs: PNG, JPG/JPEG, BMP, WebP, TIF, and TIFF. Multi-page TIFF files use the first page.</p>
+              <p class="hint">The sample image is loaded automatically. Uploading a file replaces it. Supported single-image inputs: PNG, JPG/JPEG, BMP, WebP, TIF, and TIFF. Multi-page TIFF files use the first page.</p>
               <label for="pixelSize">Source pixel size (μm/pixel)</label>
               <input id="pixelSize" type="number" min="0.0001" step="0.0001" value="1.1627906976744187">
               <p class="hint">Manual values should come from the original microscopy image. If the browser downsizes the image, the app converts this value before measuring objects.</p>
@@ -592,7 +534,7 @@
               </div>
               <label for="maxSide">Max browser-analysis side (px)</label>
               <input id="maxSide" type="number" min="256" max="1024" step="16" value="1024">
-              <div id="status" class="status">Loading the public example image...</div>
+              <div id="status" class="status">Loading the sample image...</div>
               <div class="downloads">
                 <a id="imageCsvLink" class="button secondary" href="#" download="image_summary.csv" style="display:none;">Download image CSV</a>
                 <a id="objectCsvLink" class="button secondary" href="#" download="component_measurements.csv" style="display:none;">Download object CSV</a>
@@ -608,9 +550,10 @@
             <div class="metrics" aria-live="polite">
               <div class="metric"><strong id="mCount">-</strong><span>Nodule count</span></div>
               <div class="metric"><strong id="mDensity">-</strong><span>Count density, mm⁻²</span></div>
-              <div class="metric"><strong id="mDiameter">-</strong><span>Mean diameter, μm</span></div>
-              <div class="metric"><strong id="mCircularity">-</strong><span>Mean spheroidicity</span></div>
+              <div class="metric"><strong id="mDiameter">-</strong><span>Mean equivalent diameter, μm</span></div>
+              <div class="metric"><strong id="mCircularity">-</strong><span>Mean circularity</span></div>
             </div>
+            <p class="metric-note">Circularity is calculated as 4πA/P² and should not be interpreted as formal ASTM A247 nodularity.</p>
             <div class="charts" aria-live="polite">
               <div class="panel chart-card">
                 <div class="panel-body">
@@ -620,48 +563,73 @@
               </div>
               <div class="panel chart-card">
                 <div class="panel-body">
-                  <div class="chart-head"><h3>Spheroidicity</h3><span>2D circularity, 0 to 1</span></div>
-                  <canvas id="circularityHist" class="chart-canvas" width="420" height="220" aria-label="Spheroidicity histogram"></canvas>
+                  <div class="chart-head"><h3>Circularity</h3><span>4πA/P², 0 to 1</span></div>
+                  <canvas id="circularityHist" class="chart-canvas" width="420" height="220" aria-label="Circularity histogram"></canvas>
                 </div>
               </div>
             </div>
-            <div class="note">The browser tool is a quick single-image workflow. The Python script remains the recommended route for formal batch statistics and reproducible reporting.</div>
+            <div class="note">For multiple images and reproducible batch processing, use the Python workflow available in the GitHub repository.</div>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="python">
+    <section id="validation">
       <div class="wrap">
         <div class="section-head">
-          <h2>Batch analysis</h2>
-          <p>Use the Python script for multiple images, probability maps, masks, overlays, JSON summaries, and object-level CSV output.</p>
+          <h2>Scientific validation</h2>
+          <p>The released segmentation model was checked against curated validation masks and a public reference workflow example.</p>
         </div>
-        <pre><code>git clone https://github.com/ustbTobyMa/adi-graphite-nodule-ai.git
-cd adi-graphite-nodule-ai
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-python scripts/graphite_nodule_analyzer.py \
-  --image-dir /path/to/sem_images \
-  --checkpoint models/graphite_unet_seed7.pt \
-  --output-dir /path/to/output \
-  --pixel-size-um 1.16279 \
-  --threshold 0.50 \
-  --min-area-px 25 \
-  --max-area-px 20000</code></pre>
+        <div class="validation-cards">
+          <div class="metric"><strong>0.963</strong><span>Dice coefficient</span></div>
+          <div class="metric"><strong>0.929</strong><span>Intersection over union</span></div>
+          <div class="metric"><strong>0.933</strong><span>Precision</span></div>
+          <div class="metric"><strong>0.995</strong><span>Recall</span></div>
+        </div>
+        <div class="panel">
+          <div class="panel-body">
+            <h3>Public example: reference workflow vs AI workflow</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Metric</th>
+                    <th>Reference workflow</th>
+                    <th>AI workflow</th>
+                    <th>Relative difference</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>Nodule count</td><td>180</td><td>178</td><td>1.1%</td></tr>
+                  <tr><td>Count density</td><td>169.28 mm⁻²</td><td>167.40 mm⁻²</td><td>1.1%</td></tr>
+                  <tr><td>Mean equivalent diameter</td><td>25.81 μm</td><td>25.75 μm</td><td>0.2%</td></tr>
+                  <tr><td>Mean circularity</td><td>0.791</td><td>0.851</td><td>7.5%</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="hint">This is a workflow-level validation check using a public example and is not an independent multi-expert ASTM A247 benchmark.</p>
+          </div>
+        </div>
+        <details class="details-box">
+          <summary>Validation details and limitations</summary>
+          <div class="details-body">
+            <p>Segmentation metrics quantify agreement with curated validation masks. The public reference-workflow comparison is a single-image workflow check rather than an independent multi-expert ASTM A247 benchmark.</p>
+            <p>The browser interface is intended for rapid single-image analysis. The Python workflow is recommended for batch processing and formal reporting.</p>
+            <p>Performance may vary with magnification, microscope type, image contrast, preparation condition, scale bars, scratches, pores, and other imaging artifacts. Always inspect the segmentation overlay before using exported statistics.</p>
+          </div>
+        </details>
       </div>
     </section>
 
-    <section id="files">
+    <section id="batch">
       <div class="wrap">
         <div class="section-head">
-          <h2>Released files</h2>
+          <h2>Batch use</h2>
+          <p>For multiple images, reproducible outputs, masks, overlays, JSON summaries, and object-level CSV files, use the Python workflow in the GitHub repository.</p>
         </div>
-        <div class="grid-2">
-          <div class="panel"><div class="panel-body"><h3>Models</h3><p class="muted"><a href="models/graphite_unet_seed7.onnx">ONNX model</a> for the browser and <a href="models/graphite_unet_seed7.pt">PyTorch checkpoint</a> for Python batch analysis.</p></div></div>
-          <div class="panel"><div class="panel-body"><h3>Example</h3><p class="muted"><a href="examples/images/sample_ductile_iron_sem.png">One SEM example</a>, <a href="examples/reference/sample_overlay.png">one overlay</a>, and <a href="examples/reference/sample_mask.png">one mask</a> are provided for testing only.</p></div></div>
+        <div class="actions">
+          <a class="button" href="https://github.com/ustbTobyMa/adi-graphite-nodule-ai">Open GitHub repository</a>
+          <a class="button secondary" href="models/graphite_unet_seed7.pt">Download Python model</a>
         </div>
       </div>
     </section>
@@ -669,7 +637,7 @@ python scripts/graphite_nodule_analyzer.py \
 
   <footer>
     <div class="wrap">
-      <span>Graphite Nodule AI</span>
+      <span>This workflow was developed in association with a study on explainable data-driven design of austempered ductile iron.</span>
       <span><a href="https://github.com/ustbTobyMa/adi-graphite-nodule-ai">github.com/ustbTobyMa/adi-graphite-nodule-ai</a></span>
     </div>
   </footer>
@@ -807,7 +775,7 @@ python scripts/graphite_nodule_analyzer.py \
       els.imageCsvLink.style.display = "none";
       els.objectCsvLink.style.display = "none";
       clearHistogram(els.diameterHist, "Equivalent diameter");
-      clearHistogram(els.circularityHist, "Spheroidicity");
+      clearHistogram(els.circularityHist, "Circularity");
     }
 
     function clearCalibration(message) {
@@ -1104,7 +1072,7 @@ python scripts/graphite_nodule_analyzer.py \
       state.imageBitmap = await createImageBitmap(blob);
       state.fileName = "sample_ductile_iron_sem.png";
       els.fileNameLabel.textContent = "Default example: sample_ductile_iron_sem.png";
-      preparePreview("Example image loaded. Run local analysis to segment nodules.");
+      preparePreview("Sample image loaded. Run analysis to segment nodules.");
     }
 
     async function ensureSession() {
@@ -1119,7 +1087,7 @@ python scripts/graphite_nodule_analyzer.py \
 
     async function runAnalysis() {
       if (!state.imageBitmap) {
-        setStatus("The public example image has not finished loading. Wait a moment or choose a local microscopy image.");
+        setStatus("The sample image has not finished loading. Wait a moment or choose a local microscopy image.");
         return;
       }
       const threshold = Number(els.threshold.value);
@@ -1178,7 +1146,7 @@ python scripts/graphite_nodule_analyzer.py \
         els.mDiameter.textContent = Number.isFinite(imageRow.mean_equivalent_diameter_um) ? imageRow.mean_equivalent_diameter_um.toFixed(2) : "-";
         els.mCircularity.textContent = Number.isFinite(imageRow.mean_circularity) ? imageRow.mean_circularity.toFixed(3) : "-";
         drawHistogram(els.diameterHist, diameters, { label: "Equivalent diameter", color: "#1f6669", bins: 12, tickDigits: 1 });
-        drawHistogram(els.circularityHist, circularities, { label: "Spheroidicity", color: "#a94632", min: 0, max: 1, bins: 10, tickDigits: 1 });
+        drawHistogram(els.circularityHist, circularities, { label: "Circularity", color: "#a94632", min: 0, max: 1, bins: 10, tickDigits: 1 });
         makeDownload(els.imageCsvLink, toCsv([imageRow]), "image_summary.csv");
         makeDownload(els.objectCsvLink, toCsv(objectRows), "component_measurements.csv");
         setStatus("Analysis complete. Inspect the overlay before using the metrics.");
@@ -1202,7 +1170,7 @@ python scripts/graphite_nodule_analyzer.py \
         state.imageBitmap = await loadImageFile(file);
         state.fileName = file.name;
         els.fileNameLabel.textContent = file.name;
-        preparePreview(`${file.name} loaded. Run local analysis to segment nodules.`);
+        preparePreview(`${file.name} loaded. Run analysis to segment nodules.`);
       } catch (error) {
         console.error(error);
         setStatus(`Image load failed: ${error.message}`);
@@ -1258,7 +1226,7 @@ python scripts/graphite_nodule_analyzer.py \
 
     els.maxSide.addEventListener("change", () => {
       if (!state.imageBitmap) return;
-      preparePreview("Image size changed for browser analysis. Run local analysis again.", "Scale calibration was reset for this image size. Select the scale bar again if needed.");
+      preparePreview("Image size changed for browser analysis. Run analysis again.", "Scale calibration was reset for this image size. Select the scale bar again if needed.");
     });
 
     els.runBtn.addEventListener("click", runAnalysis);

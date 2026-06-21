@@ -1,12 +1,8 @@
-# Graphite Nodule AI
+# Graphite Nodule Analyzer
 
-AI-assisted graphite nodule segmentation and statistics for ductile cast iron microscopy images.
+AI-assisted segmentation and quantitative analysis of graphite nodules in ductile iron microscopy images.
 
-This repository provides a trained CNN-based computer-vision workflow, a browser demo, and a Python batch-analysis script. One public SEM example and reference overlay are provided for testing the workflow.
-
-## Purpose For Reviewers
-
-This repository provides a reviewer-accessible supplementary workflow for graphite nodule segmentation and quantitative statistics used in the associated ADI manuscript. The browser demo performs local ONNX inference and is intended for single-image inspection, overlay verification, and CSV export. For manuscript-level statistics, use the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters.
+This repository provides a trained CNN-based computer-vision workflow, a browser app, and a Python batch-analysis script. The browser app is designed for quick single-image analysis, while the Python workflow is intended for reproducible batch processing.
 
 ## Use In Browser
 
@@ -14,52 +10,51 @@ Open the GitHub Pages app:
 
 https://ustbTobyMa.github.io/adi-graphite-nodule-ai/
 
-The browser app runs locally in the user's browser with ONNX Runtime Web. Uploaded microscopy images are not sent to a server. Users can:
+The browser app runs locally with ONNX Runtime Web. Images uploaded to the browser are processed on the user's computer and are not sent to a remote server. A sample image is loaded automatically, so users can click **Run analysis** immediately or upload their own image.
+
+Users can:
 
 - upload a microscopy image
 - use common browser inputs including PNG, JPG/JPEG, BMP, WebP, TIF, and TIFF
 - enter the microscopy pixel size in μm per source pixel, or calibrate it by selecting the two ends of a scale bar in the image
 - run the released CNN-based computer-vision workflow in the browser
-- inspect the overlay and synchronized equivalent-diameter and spheroidicity histograms
+- inspect the segmentation overlay and synchronized equivalent-diameter and circularity histograms
 - download image-level and object-level CSV outputs
 
-For manuscript-level statistics, we used the Python batch workflow with fixed pixel size, probability threshold, watershed splitting, and object-size filters. The browser tool is intended for reviewer inspection and single-image verification. Multi-page TIFF files are loaded from the first page.
+The main browser outputs are nodule count, count density in mm⁻², mean equivalent diameter in μm, and mean circularity. Circularity is calculated as `4πA/P²` and should not be interpreted as formal ASTM A247 nodularity. Multi-page TIFF files are loaded from the first page.
 
-Reviewer quick test: the public example image is loaded by default. Keep the default probability threshold of 0.50, confirm the pixel size of 1.16279 μm/pixel, and click **Run local analysis**. The overlay and downloadable CSV files can be used to inspect segmentation quality and object-level statistics.
+## Scientific Validation
 
-## Reviewer Validation Summary
-
-### Public Example: AI vs ImageJ-Style Workflow
-
-The public example was compared with a traditional ImageJ-style workflow: inverted-grayscale Otsu thresholding, watershed splitting, the same 1.16279 μm/pixel scale, and the same 25-20000 px object-size filters.
-
-| Metric | ImageJ-style workflow | Python CNN workflow | Relative error |
-| --- | ---: | ---: | ---: |
-| Nodule count | 180 | 178 | 1.1% |
-| Count density | 169.28 mm⁻² | 167.40 mm⁻² | 1.1% |
-| Mean diameter | 25.81 μm | 25.75 μm | 0.2% |
-| Mean spheroidicity | 0.791 | 0.851 | 7.5% |
-
-Relative error is calculated against the ImageJ-style result. This is a public single-image sanity check rather than a fully independent expert-label benchmark. The CNN-workflow values in this table are from the Python batch workflow used for formal statistics.
-
-The slightly larger difference in mean spheroidicity mainly reflects boundary-smoothing and watershed-splitting differences between threshold-based ImageJ-style segmentation and probability-map-based CNN segmentation; count density and equivalent diameter remain highly consistent.
-
-### Model and Workflow Metrics
+The released segmentation model was checked against curated validation masks and a public reference workflow example.
 
 | Metric | Value | Scope |
 | --- | ---: | --- |
 | Dice coefficient | 0.963 | Held-out curated reference masks |
 | IoU | 0.929 | Held-out curated reference masks |
-| Precision / recall | 0.933 / 0.995 | Held-out curated reference masks |
+| Precision | 0.933 | Held-out curated reference masks |
+| Recall | 0.995 | Held-out curated reference masks |
 | Nodule-count MAE | 2.33 nodules | Two-seed repeatability over low-magnification fields |
 | Count-density MAE | 2.19 mm⁻² | Two-seed repeatability over low-magnification fields |
-| Area-fraction difference | 0.20 percentage points | Public ImageJ-style check |
+| Area-fraction difference | 0.20 percentage points | Public reference-workflow check |
 
-The reported validation metrics quantify agreement with curated reference masks rather than a fully independent expert-labeled benchmark.
+### Public Example: Reference Workflow vs AI Workflow
+
+The public example was compared with a traditional ImageJ-style reference workflow: inverted-grayscale Otsu thresholding, watershed splitting, the same 1.16279 μm/pixel scale, and the same 25-20000 px object-size filters.
+
+| Metric | Reference workflow | AI workflow | Relative difference |
+| --- | ---: | ---: | ---: |
+| Nodule count | 180 | 178 | 1.1% |
+| Count density | 169.28 mm⁻² | 167.40 mm⁻² | 1.1% |
+| Mean equivalent diameter | 25.81 μm | 25.75 μm | 0.2% |
+| Mean circularity | 0.791 | 0.851 | 7.5% |
+
+Relative difference is calculated against the reference-workflow result. This is a workflow-level validation check using a public example and is not an independent multi-expert ASTM A247 benchmark. The slightly larger difference in mean circularity mainly reflects boundary-smoothing and watershed-splitting differences between threshold-based segmentation and probability-map-based CNN segmentation; count density and equivalent diameter remain highly consistent.
+
+The reported segmentation metrics quantify agreement with curated validation masks rather than a fully independent expert-labeled benchmark.
 
 ## Batch Analysis With Python
 
-For formal or batch analysis, use the Python script:
+For multiple images, reproducible outputs, masks, overlays, JSON summaries, and object-level CSV files, use the Python script:
 
 ```bash
 git clone https://github.com/ustbTobyMa/adi-graphite-nodule-ai.git
@@ -70,7 +65,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 python scripts/graphite_nodule_analyzer.py \
-  --image-dir /path/to/sem_images \
+  --image-dir /path/to/microscopy_images \
   --checkpoint models/graphite_unet_seed7.pt \
   --output-dir /path/to/output \
   --pixel-size-um 1.16279 \
@@ -79,7 +74,7 @@ python scripts/graphite_nodule_analyzer.py \
   --max-area-px 20000
 ```
 
-`--pixel-size-um` must be measured from the user's own microscopy scale bar. For example, if a 100 μm scale bar spans 86 pixels, use `100/86 = 1.1627906976744187`. The example values above reproduce the public reviewer-check configuration.
+`--pixel-size-um` must be measured from the user's own microscopy scale bar. For example, if a 100 μm scale bar spans 86 pixels, use `100/86 = 1.1627906976744187`. The example values above reproduce the public example configuration.
 
 ## Outputs
 
@@ -119,7 +114,7 @@ Avoid high-magnification close-ups, edge regions, fracture/defect fields, scale 
 
 ## Limitations
 
-The released model was trained on curated SEM images from the manuscript study. It should be visually checked on new microscopes, magnifications, etching conditions, alloy systems, and image acquisition settings. For formal reporting, inspect the exported overlays and report the pixel size, threshold, and object-size filters.
+The released model was trained on curated ductile-iron microscopy images from the associated study. It should be visually checked on new microscopes, magnifications, etching conditions, alloy systems, and image acquisition settings. For formal reporting, inspect the exported overlays and report the pixel size, threshold, and object-size filters.
 
 ## Citation
 
